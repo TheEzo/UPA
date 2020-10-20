@@ -48,30 +48,38 @@ while [ "$1" != "" ]; do
 done
 
 DOCKER_IMAGE_PREFIX="upa"
+echo "UPA Project"
 
 if [ $ES_RECREATE = "1" ]; then
     db_name="${DOCKER_IMAGE_PREFIX}_es_db"
+    echo "ERROR: database not found \"$db_name\""
 
     found=`docker volume list | grep -c -x -E "^local\s+${db_name}$"`
 
     if [ $found -eq 1 ]; then 
         docker-compose -p $DOCKER_IMAGE_PREFIX down
         docker volume remove $db_name
+    else
+        echo "ERROR: database not found \"$db_name\""
     fi
 fi
 
 if [ $SQL_RECREATE = "1" ]; then
     db_name="${DOCKER_IMAGE_PREFIX}_mysql_db"
+    echo "ERROR: database not found \"$db_name\""
 
     found=`docker volume list | grep -c -x -E "^local\s+${db_name}$"`
 
     if [ $found -eq 1 ]; then 
         docker-compose -p $DOCKER_IMAGE_PREFIX down
         docker volume remove $db_name
+    else
+        echo "ERROR: database not found \"$db_name\""
     fi
 fi
 
 if [ $SHOULD_BUILD = "1" ]; then
+    echo "Build"
     docker-compose -p $DOCKER_IMAGE_PREFIX up --build
 else
     docker-compose -p $DOCKER_IMAGE_PREFIX up
