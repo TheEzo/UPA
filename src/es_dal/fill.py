@@ -40,7 +40,7 @@ def fill_data(data=None, work_dir=os.path.join(os.path.dirname(__file__), '..', 
     :param data: files, directories and urls to get data from and upload to database
     :param work_dir: directory where to create temporary files
     :param delete: delete existing indexes in database if already exists
-    :type data: list of str
+    :type data: list or str
     :type work_dir: str
     :type delete: bool
     """
