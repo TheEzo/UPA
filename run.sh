@@ -48,8 +48,10 @@ while [ "$1" != "" ]; do
 done
 
 DOCKER_IMAGE_PREFIX="upa"
+echo "UPA Project"
 
 if [ $ES_RECREATE = "1" ]; then
+    echo "Recreate elasticsearch: \"$db_name\""
     db_name="${DOCKER_IMAGE_PREFIX}_es_db"
 
     found=`docker volume list | grep -c -x -E "^local\s+${db_name}$"`
@@ -57,10 +59,13 @@ if [ $ES_RECREATE = "1" ]; then
     if [ $found -eq 1 ]; then 
         docker-compose -p $DOCKER_IMAGE_PREFIX down
         docker volume remove $db_name
+    else
+        echo "ERROR: docker volume not found: \"$db_name\""
     fi
 fi
 
 if [ $SQL_RECREATE = "1" ]; then
+    echo "Recreate MySQL: \"$db_name\""
     db_name="${DOCKER_IMAGE_PREFIX}_mysql_db"
 
     found=`docker volume list | grep -c -x -E "^local\s+${db_name}$"`
@@ -68,12 +73,16 @@ if [ $SQL_RECREATE = "1" ]; then
     if [ $found -eq 1 ]; then 
         docker-compose -p $DOCKER_IMAGE_PREFIX down
         docker volume remove $db_name
+    else
+        echo "ERROR: docker volume not found: \"$db_name\""
     fi
 fi
 
 if [ $SHOULD_BUILD = "1" ]; then
+    echo "Run docker-compose --build"
     docker-compose -p $DOCKER_IMAGE_PREFIX up --build
 else
+    echo "Run docker-compose"
     docker-compose -p $DOCKER_IMAGE_PREFIX up
 fi
 
