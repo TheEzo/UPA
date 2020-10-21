@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import sys
+import urllib.error
 import urllib.request
 
 from .elastic import Elastic
@@ -15,20 +16,36 @@ logger = logging.getLogger('nosql_fill')
 
 
 def is_url(url):
+    """
+    Check if given string is an url
+    :param url: string that to be checked
+    :type url: str
+    :return: True if string is an URl that can be accessed, False otherwise
+    :rtype: bool
+    """
     try:
         status_code = urllib.request.urlopen(url).getcode()
         if status_code == 200:
             return True
-    except:
-        pass
+    except urllib.error.URLError as e:  # URLError is a base class for urllib exceptions
+        logger.warning(str(e.reason))
     logger.warning('Url is not valid: {0}'.format(url))
     return False
 
 
 def fill_data(data=None, work_dir=os.path.join(os.path.dirname(__file__), '..', '..', 'work'), delete=True):
-    # data to list
+    """
+    Get data from given sources and pass them to NoSQL database.
+
+    :param data: files, directories and urls to get data from and upload to database
+    :param work_dir: directory where to create temporary files
+    :param delete: delete existing indexes in database if already exists
+    :type data: list of str
+    :type work_dir: str
+    :type delete: bool
+    """
     data = [] if data is None else data  # non-mutable data argument
-    data = data if type(data) is list else [data]  # data as a list
+    data = data if type(data) is list else [data]  # data is a list
 
     if not os.path.exists(work_dir):  # assure work directory exists
         os.makedirs(work_dir)
@@ -36,6 +53,9 @@ def fill_data(data=None, work_dir=os.path.join(os.path.dirname(__file__), '..', 
     for data_src in data:  # upload data to database
         if os.path.isdir(data_src):  # directory
             # TODO: do we want this to be recursive?
+            for base_dir, _, files in os.walk(data_src):
+                for data_file in files:
+                    upload_file(os.path.join(base_dir, data_file), delete=delete)
             for data_file in os.listdir(data_src):
                 if os.path.isfile(data_src):
                     upload_file(data_file, delete=delete)
@@ -47,10 +67,21 @@ def fill_data(data=None, work_dir=os.path.join(os.path.dirname(__file__), '..', 
                 data = response.read()  # a `bytes` object, therefore "wb" mode
                 tmp_file.write(data)
             upload_file(tmp_file_name, delete=delete)
+        else:
+            logger.error("Unrecognized data type (not a file/directory/url): {0}".format(data_src))
 
 
 def upload_file(src, delete=True):
-    logger.info('Upload file to NoSQL database\n\t{0}\n\t{1}'.format(src, datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    """
+    Get data from given sources and pass them to NoSQL database.
+
+    :param src: path of file to be read, parsed and uploaded to database. can be CSV of JSON
+    :param delete: delete existing indexes in database if already exists
+    :type src: str
+    :type delete: bool
+    """
+    logger.info('Upload file to NoSQL database\n\t{0}\n\t{1}'
+                ''.format(src, datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     es = Elastic()
     index_name, src_type = os.path.basename(src).rsplit('.', 1)
     src_type = src_type.lower()
@@ -79,4 +110,5 @@ def upload_file(src, delete=True):
             es.index(index_name, record)  # insert data to DB
     else:
         logger.error("Unsupported file type: {0}".format(src_type))
-    logger.info('File uploaded to NoSQL database:\n\t{0}\n\t{1}'.format(src, datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    logger.info('File uploaded to NoSQL database:\n\t{0}\n\t{1}'
+                ''.format(src, datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))

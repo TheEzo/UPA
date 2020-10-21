@@ -6,7 +6,7 @@ import os
 import mysql.connector
 import sys
 
-from es_dal.fill import fill_data, upload_file
+from es_dal.fill import fill_data
 
 # lower level to see logs even from other modules (elasticsearch, mysql.connector etc.)
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
@@ -28,7 +28,10 @@ def main():
         port=3306,
         user='root'
     )
+    logger.info(db)
+
     logger.info("Finished: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+
 
 if __name__ == '__main__':
     sys.exit(main())
