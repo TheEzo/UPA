@@ -52,13 +52,9 @@ def fill_data(data=None, work_dir=os.path.join(os.path.dirname(__file__), '..', 
 
     for data_src in data:  # upload data to database
         if os.path.isdir(data_src):  # directory
-            # TODO: do we want this to be recursive?
             for base_dir, _, files in os.walk(data_src):
                 for data_file in files:
                     upload_file(os.path.join(base_dir, data_file), delete=delete)
-            for data_file in os.listdir(data_src):
-                if os.path.isfile(data_src):
-                    upload_file(data_file, delete=delete)
         elif os.path.isfile(data_src):  # file
             upload_file(data_src, delete=delete)
         elif '/' in data_src and is_url(data_src):  # url
