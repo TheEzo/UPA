@@ -1,23 +1,110 @@
 #!/usr/bin/python3
 
+import csv
+import datetime
+import json
+import logging
 import os
 import sys
-from json import loads
+import urllib.error
+import urllib.request
 
 from .elastic import Elastic
 
 
-def fill_data(delete=True):
-    data_dir = os.path.join(os.path.dirname(__file__), '../../data')
-    es = Elastic()
-    for file in os.listdir(data_dir):
-        index_name = file.split('.')[0]
-        if delete:
-            es.indices.delete(index_name, ignore=[400, 404])
+logger = logging.getLogger('nosql_fill')
 
-        sys.stdout.write(f'Populating index "{index_name}"...')
-        with open(os.path.join(data_dir, file), 'r') as f:
-            data = loads(f.read())
+
+def is_url(url):
+    """
+    Check if given string is an url
+    :param url: string that to be checked
+    :type url: str
+    :return: True if string is an URl that can be accessed, False otherwise
+    :rtype: bool
+    """
+    try:
+        status_code = urllib.request.urlopen(url).getcode()
+        if status_code == 200:
+            return True
+    except urllib.error.URLError as e:  # URLError is a base class for urllib exceptions
+        logger.warning(str(e.reason))
+    logger.warning('Url is not valid: {0}'.format(url))
+    return False
+
+
+def fill_data(data=None, work_dir=os.path.join(os.path.dirname(__file__), '..', '..', 'work'), delete=True):
+    """
+    Get data from given sources and pass them to NoSQL database.
+
+    :param data: files, directories and urls to get data from and upload to database
+    :param work_dir: directory where to create temporary files
+    :param delete: delete existing indexes in database if already exists
+    :type data: list or str
+    :type work_dir: str
+    :type delete: bool
+    """
+    data = [] if data is None else data  # non-mutable data argument
+    data = data if type(data) is list else [data]  # data is a list
+
+    if not os.path.exists(work_dir):  # assure work directory exists
+        os.makedirs(work_dir)
+
+    for data_src in data:  # upload data to database
+        if os.path.isdir(data_src):  # directory
+            for base_dir, _, files in os.walk(data_src):
+                for data_file in files:
+                    upload_file(os.path.join(base_dir, data_file), delete=delete)
+        elif os.path.isfile(data_src):  # file
+            upload_file(data_src, delete=delete)
+        elif '/' in data_src and is_url(data_src):  # url
+            tmp_file_name = os.path.join(work_dir, data_src.rsplit('/', 1)[1])  # workdir + filename
+            with urllib.request.urlopen(data_src) as response, open(tmp_file_name, 'wb') as tmp_file:
+                data = response.read()  # a `bytes` object, therefore "wb" mode
+                tmp_file.write(data)
+            upload_file(tmp_file_name, delete=delete)
+        else:
+            logger.error("Unrecognized data type (not a file/directory/url): {0}".format(data_src))
+
+
+def upload_file(src, delete=True):
+    """
+    Get data from given sources and pass them to NoSQL database.
+
+    :param src: path of file to be read, parsed and uploaded to database. can be CSV of JSON
+    :param delete: delete existing indexes in database if already exists
+    :type src: str
+    :type delete: bool
+    """
+    logger.info('Upload file to NoSQL database\n\t{0}\n\t{1}'
+                ''.format(src, datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    es = Elastic()
+    index_name, src_type = os.path.basename(src).rsplit('.', 1)
+    src_type = src_type.lower()
+    logger.info("Database index: {0}, file type: {1}".format(index_name, src_type))
+    if delete:
+        es.indices.delete(index_name, ignore=[400, 404])
+    if src_type == 'csv':
+        # First three characters of a file can be 'Byte order mark', use encoding to skip them
+        # Otherwise it will corrupt the first column name like ['ï»¿MINUTE', 'HOUR', ...]
+        with open(src, encoding="utf-8-sig", newline='') as csvfile:
+            csv_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+            columns = []
+            for row in csv_reader:
+                if not columns:  # first line defines column names
+                    columns = row
+                    logger.info("CSV columns: {}".format(columns))
+                    continue
+                row_data = {}  # add keys to values (list to dict conversion)
+                for col in columns:
+                    row_data[col] = row[columns.index(col)]
+                es.index(index_name, row_data)  # insert data to DB
+    elif src_type == 'json':
+        with open(src,) as f:
+            data = json.load(f)
         for record in data['data']:
-            es.index(index_name, record)
-        print(f' (done)')
+            es.index(index_name, record)  # insert data to DB
+    else:
+        logger.error("Unsupported file type: {0}".format(src_type))
+    logger.info('File uploaded to NoSQL database:\n\t{0}\n\t{1}'
+                ''.format(src, datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))

@@ -1,14 +1,20 @@
 #!/usr/bin/python3
 
+import argparse
+import datetime
+import logging
+import os
 import sys
 
+import mysql.connector
+import mysql.connector
+from flask import Flask
+
+from src.es_dal.fill import fill_data
 from src.web.views import init_views
 
-import os
-from src.es_dal.fill import fill_data
-import mysql.connector
-import argparse
-from flask import Flask, render_template, redirect, url_for
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logger = logging.getLogger('main')
 
 
 def main():
@@ -22,7 +28,20 @@ def main():
         app = create_app()
         app.run(host='0.0.0.0', port='80', debug=True)
     elif args.fill:
-        fill_data()
+        logger.info("Started: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+
+        # fill specific sources
+        fill_data(data=['https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/nakaza.json',
+                        os.path.join(os.path.dirname(__file__), '..', 'data', 'nakaza.csv')])
+
+        db = mysql.connector.connect(
+            host="localhost",
+            port=3306,
+            user='root'
+        )
+        logger.info(db)
+
+        logger.info("Finished: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
 
 def create_app():
