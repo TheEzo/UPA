@@ -7,7 +7,6 @@ import os
 import sys
 
 import mysql.connector
-import mysql.connector
 from flask import Flask
 
 from src.es_dal.fill import fill_data
@@ -49,13 +48,7 @@ def create_app():
     app = Flask(__name__, template_folder='web/templates')
     app.config.from_mapping(
         SECRET_KEY='UPA',
-        DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
     )
-
-    app.config['MYSQL_HOST'] = 'localhost'
-    app.config['MYSQL_USER'] = 'root'
-    app.config['MYSQL_PASSWORD'] = 'root'
-    app.config['MYSQL_DB'] = 'upa'
 
     init_views(app)
 
