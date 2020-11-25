@@ -8,12 +8,14 @@ import os
 import sys
 import urllib.error
 import urllib.request
-
+import ssl
+import pandas as pd
 from .elastic import Elastic
+from elasticsearch import helpers
 
 
 logger = logging.getLogger('nosql_fill')
-
+context = ssl._create_unverified_context()
 
 def is_url(url):
     """
@@ -24,12 +26,12 @@ def is_url(url):
     :rtype: bool
     """
     try:
-        status_code = urllib.request.urlopen(url).getcode()
+        status_code = urllib.request.urlopen(url, context=context).getcode()
         if status_code == 200:
             return True
     except urllib.error.URLError as e:  # URLError is a base class for urllib exceptions
         logger.warning(str(e.reason))
-    logger.warning('Url is not valid: {0}'.format(url))
+        logger.warning('Url is not valid: {0}'.format(url))
     return False
 
 
@@ -59,7 +61,7 @@ def fill_data(data=None, work_dir=os.path.join(os.path.dirname(__file__), '..', 
             upload_file(data_src, delete=delete)
         elif '/' in data_src and is_url(data_src):  # url
             tmp_file_name = os.path.join(work_dir, data_src.rsplit('/', 1)[1])  # workdir + filename
-            with urllib.request.urlopen(data_src) as response, open(tmp_file_name, 'wb') as tmp_file:
+            with urllib.request.urlopen(data_src, context=context) as response, open(tmp_file_name, 'wb') as tmp_file:
                 data = response.read()  # a `bytes` object, therefore "wb" mode
                 tmp_file.write(data)
             upload_file(tmp_file_name, delete=delete)
@@ -87,18 +89,14 @@ def upload_file(src, delete=True):
     if src_type == 'csv':
         # First three characters of a file can be 'Byte order mark', use encoding to skip them
         # Otherwise it will corrupt the first column name like ['ï»¿MINUTE', 'HOUR', ...]
-        with open(src, encoding="utf-8-sig", newline='') as csvfile:
-            csv_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-            columns = []
-            for row in csv_reader:
-                if not columns:  # first line defines column names
-                    columns = row
-                    logger.info("CSV columns: {}".format(columns))
-                    continue
-                row_data = {}  # add keys to values (list to dict conversion)
-                for col in columns:
-                    row_data[col] = row[columns.index(col)]
-                es.index(index_name, row_data)  # insert data to DB
+        
+        es.indices.create(index_name)
+        csvfile=pd.read_csv(src, iterator=True, chunksize=5000) 
+        
+        for i,df in enumerate(csvfile): 
+            records=df.where(pd.notnull(df), None).T.to_dict()
+            list_records=[records[it] for it in records]
+            helpers.bulk(es, list_records, index=index_name)
     elif src_type == 'json':
         with open(src,) as f:
             data = json.load(f)

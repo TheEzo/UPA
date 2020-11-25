@@ -19,7 +19,7 @@ class Country(Base):
     code = Column(String(10), primary_key=True) # csu code
     name = Column(String(50), nullable=False)
 
-    covidcases = relationship('covidcase', back_populates='country')
+    covidcases = relationship('CovidCase', back_populates='country')
 
 class Region(Base):
     __tablename__ = 'region'
@@ -27,7 +27,7 @@ class Region(Base):
     code = Column(String(10), primary_key=True) # nuts code
     name = Column(String(50), nullable=False)
 
-    townships = relationship('township', back_populates='region')
+    townships = relationship('Township', back_populates='region')
 
 class Township(Base):
     __tablename__ = 'township'
@@ -38,7 +38,7 @@ class Township(Base):
     region_code = Column(String(10), ForeignKey(Region.code))
     region = relationship(Region, back_populates="townships")
 
-    covidcases = relationship('covidcase', back_populates='township')
+    covidcases = relationship('CovidCase', back_populates='township')
 
 class CovidCase(Base):
     __tablename__ = 'covidcase'
