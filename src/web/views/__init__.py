@@ -1,4 +1,4 @@
-from src.web.views import base
+from web.views import base
 
 
 def init_views(app):

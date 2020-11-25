@@ -9,8 +9,8 @@ import sys
 import mysql.connector
 from flask import Flask
 
-from src.es_dal.fill import fill_data
-from src.web.views import init_views
+from es_dal.fill import fill_data
+from web.views import init_views
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger('main')
@@ -30,16 +30,25 @@ def main():
         logger.info("Started: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
         # fill specific sources
-        fill_data(data=['https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/nakaza.json',
-                        os.path.join(os.path.dirname(__file__), '..', 'data', 'nakaza.csv')])
+
+        get_data_path = lambda file_name : os.path.join(os.path.dirname(__file__), '..', 'data', file_name)
+
+        fill_data('https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/nakaza.json') #nakaza.csv
+
+        #fill_data('http://apl.czso.cz/iSMS/cisexp.jsp?kodcis=86&typdat=0&cisvaz=124_1313&datpohl=20.10.2020&cisjaz=203&format=2&separator=,') #staty.csv; windows-1250
+        #fill_data('http://apl.czso.cz/iSMS/cisexp.jsp?kodcis=108&typdat=1&cisvaz=109_210&datpohl=20.10.2020&cisjaz=203&format=2&separator=,') #kraje_a_okresy.csv; windows-1250
+
+        fill_data(get_data_path('staty.csv'))
+        fill_data(get_data_path('kraje_a_okresy.csv'))
 
         db = mysql.connector.connect(
             host="localhost",
             port=3306,
-            user='root'
+            user='root',
+            password='root'
         )
-        logger.info(db)
 
+        logger.info(db)
         logger.info("Finished: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
 
