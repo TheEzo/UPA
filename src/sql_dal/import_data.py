@@ -1,9 +1,13 @@
 from es_dal.elastic import Elastic
 from elasticsearch import Elasticsearch, helpers, exceptions
 from web.core.session import db_session
-from web.core.model import Region, Township, Country, CovidCase
+from web.core.model import Region, Township, Country, CovidCase, NeighbourTownship
 from sqlalchemy import and_
+import logging
 import re
+
+
+logger = logging.getLogger('import_data')
 
 def import_countries():
     es = Elastic()
@@ -73,6 +77,39 @@ def import_townships_and_regions():
                 township_codes.add(ts_code)
                 db.add(Township(code=ts_code, name=ts_name, region_code=reg_code))
 
+        db.commit()
+    
+def import_township_neighbours():
+    es = Elastic()
+
+    with db_session() as db:
+        resp = helpers.scan(
+            es,
+            index = 'sousedni_okresy',
+            scroll = '3m',
+            size = 10,
+            query={'_source': ['HODNOTA1', 'HODNOTA2']}
+        )
+
+        townships = db.query(Township.code, Township.name)
+
+        for doc in resp:
+            name_1 = doc['_source']['HODNOTA1']
+            name_2 = doc['_source']['HODNOTA2']
+
+            if name_1 is None or len(name_1) == 0 or name_2 is None or len(name_2) == 0:
+                logger.error("Invalid data in 'sousedni_okresy'")
+                continue
+            
+            ts_1 = townships.filter(Township.name == name_1)
+            ts_2 = townships.filter(Township.name == name_2)
+
+            if ts_1.first() is None or ts_2.first() is None:
+                logger.error("Invalid data in 'sousedni_okresy', not existing township")
+                continue
+
+            db.add(NeighbourTownship(code1=ts_1.first().code, code2=ts_2.first().code))
+        
         db.commit()
 
 def import_covid_cases():

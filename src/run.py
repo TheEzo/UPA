@@ -27,11 +27,11 @@ def main():
 
     args = parser.parse_args()
 
+    logger.info("Started: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     if args.web:
         app = create_app()
         app.run(host='0.0.0.0', port='80', debug=True)
     elif args.fill:
-        logger.info("Started: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
         # fill specific sources
 
@@ -43,6 +43,7 @@ def main():
 
         fill_data(get_data_path('staty.csv'))
         fill_data(get_data_path('kraje_a_okresy.csv'))
+        fill_data(get_data_path('sousedni_okresy.csv'))
 
         fill_data(r'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/osoby.csv') #osoby (nakazeni)
         fill_data(r'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/vyleceni.csv') #vyleceni
@@ -56,11 +57,15 @@ def main():
         )
 
         logger.info(db)
-        logger.info("Finished: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+        logger.info("Finished fill: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     elif args.move:
         sqlim.import_countries()
         sqlim.import_townships_and_regions()
+        sqlim.import_township_neighbours()
         sqlim.import_covid_cases()
+        logger.info("Finished move: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    
+    logger.info("Finished: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
 def create_app():
     # create and configure the app

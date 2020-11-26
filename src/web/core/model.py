@@ -40,6 +40,12 @@ class Township(Base):
 
     covidcases = relationship('CovidCase', back_populates='township')
 
+class NeighbourTownship(Base):
+    __tablename__ = 'neighbour_township'
+
+    code1 = Column(String(10), ForeignKey(Township.code), primary_key = True)
+    code2 = Column(String(10), ForeignKey(Township.code), primary_key = True)
+
 class CovidCase(Base):
     __tablename__ = 'covidcase'
 
