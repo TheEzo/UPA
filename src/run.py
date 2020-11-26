@@ -13,6 +13,7 @@ from es_dal.fill import fill_data
 from web.views import init_views
 
 import sql_dal.import_data as sqlim
+import sql_dal.township_influence as township_influence
 from web.core.model import Base
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
@@ -24,6 +25,7 @@ def main():
     parser.add_argument('-w', '--web', action='store_true', help='Run Web')
     parser.add_argument('-f', '--fill', action='store_true', help='Fill data into databases')
     parser.add_argument('-m', '--move', action='store_true', help='Imports data from NoSQL to MySQL')
+    parser.add_argument('--query2', action='store_true', help='Answer second query')
 
     args = parser.parse_args()
 
@@ -64,6 +66,9 @@ def main():
         sqlim.import_township_neighbours()
         sqlim.import_covid_cases()
         logger.info("Finished move: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    elif args.query2:
+        township_influence.township_influence()
+        logger.info("Finished test2: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     
     logger.info("Finished: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 

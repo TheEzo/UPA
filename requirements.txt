@@ -9,6 +9,7 @@ distlib==0.3.0
 distro==1.4.0
 elasticsearch==7.9.1
 Flask==1.1.2
+graphviz==0.15
 html5lib==1.0.1
 idna==2.8
 ipaddr==2.2.0

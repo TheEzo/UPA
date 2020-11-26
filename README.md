@@ -1,5 +1,7 @@
 # UPA Project (COVID-19)
-TODO: project description
+* **Dotaz A**: vytvořte popisné charakteristiky pro alespoň 4 údaje (např. věk, pohlaví, okres, zdrojnákazy) z datové sady COVID-19: Přehled osob s prokázanou nákazou dle hlášení krajskýchhygienických stanic (využijte krabicové grafy, histogramy, atd.).
+* **Dotaz B**: určete vliv počtu nemocných a jeho změny v čase na sousední okresy (aneb zjistětejak se šíří nákaza přes hranice okresů).
+* **Vlastní dotaz**: určete vliv věku na délku nemoci a úmrtnost
 
 ## Requirements
  - Docker 18.03+ (including docker-compose etc.)
