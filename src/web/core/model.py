@@ -51,7 +51,7 @@ class CovidCase(Base):
 
     id = Column(Integer, primary_key=True)
 
-    age = Column(Integer, nullable=False)
+    age = Column(Integer, nullable=False, index=True)
     gender = Column(String(1), CheckConstraint("gender in ('m', 'f')"), nullable=False)
     
     township_code = Column(String(10), ForeignKey(Township.code), nullable=False)
@@ -60,7 +60,7 @@ class CovidCase(Base):
     country_code = Column(String(10), ForeignKey(Country.code), nullable=False)
     country = relationship(Country, back_populates="covidcases")
     
-    infected_date = Column(Date, nullable=False)
+    infected_date = Column(Date, nullable=False, index=True)
     recovered_date = Column(Date, nullable=True)
     death_date = Column(Date, nullable=True)
 

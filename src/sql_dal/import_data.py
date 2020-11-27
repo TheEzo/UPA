@@ -5,7 +5,8 @@ from web.core.model import Region, Township, Country, CovidCase, NeighbourTownsh
 from sqlalchemy import and_
 import logging
 import re
-
+import copy
+from datetime import date
 
 logger = logging.getLogger('import_data')
 
@@ -140,55 +141,123 @@ def import_covid_cases():
 
 def import_cases_recovered_death():
     es = Elastic()
+    sex = {'M': 'm', 'Z': 'f'}
 
-    sex = {'m': 'M', 'f': 'Z'}
-
-    with db_session() as db:
-        for age, gender, township_code in db.query(CovidCase.age, CovidCase.gender, CovidCase.township_code).group_by(CovidCase.age, CovidCase.gender, CovidCase.township_code):
-            body = {
+    def _init_data(nosql_index, ages_index, township_code, ages, remaining_rec):
+        body = {
                 "query": {
                     "bool": {
                         "filter": [
-                            { "match":  { "okres_lau_kod": township_code }},
-                            { "match":  { "pohlavi": sex[gender] }},
-                            { "match":  { "vek": age }},
+                            { "match":  { "okres_lau_kod": township_code }}
                         ]            
                     }
                 },
                 "sort": [
                     { "datum": { "order": "asc" }}
                 ],
-                '_source': ['datum']
+                '_source': ['pohlavi', 'vek', 'datum']
             }
 
-            recovered_dead = [(i['_source']['datum'], True) for i in helpers.scan(
+        data = [i['_source'] for i in helpers.scan(
                 es,
-                index = 'vyleceni',
+                index = nosql_index,
                 scroll = '3m',
                 size = 1000,
                 query=body
             )]
 
-            recovered_dead.extend((i['_source']['datum'], False) for i in helpers.scan(
-                es,
-                index = 'umrti',
-                scroll = '3m',
-                size = 1000,
-                query=body
-            ))
+        for i, rec in enumerate(data):
+            rec['pohlavi'] = sex[rec['pohlavi']]      
+            rec['datum'] = date.fromisoformat(rec['datum'])
 
-            recovered_dead.sort(key=lambda x: x[0])
+            if len(remaining_rec) > 0:
+                found = (rec['vek'], rec['pohlavi'])        
+                if found in remaining_rec:
+                    ages[found[0]][found[1]][ages_index] = i
+                    remaining_rec.remove(found)
 
-            cases = db.query(CovidCase) \
-                .filter(and_(CovidCase.age == age, CovidCase.gender == gender, CovidCase.township_code == township_code)) \
-                .order_by(CovidCase.infected_date)
+        return data
 
-            for case, final_date in zip(cases, recovered_dead):
-                if final_date[1] is True:    
-                    case.recovered_date = final_date[0]
+    def _find_next_match(index, to_search, case, check_date=False):
+        if check_date is False:
+            for i in range(index + 1, len(to_search)):
+                rec = to_search[i]
+
+                if rec['vek'] == case.age and rec['pohlavi'] == case.gender:
+                    return i
+
+            return None
+        else:
+            for i in range(index + 1, len(to_search)):
+                rec = to_search[i]
+
+                if rec['vek'] == case.age and rec['pohlavi'] == case.gender and rec['datum'] > case.infected_date:
+                    return i
+
+            return None
+
+
+    with db_session() as db:
+        township_codes = [i[0] for i in db.query(Township.code).all()]
+
+        for ts in township_codes:
+            cases = db.query(CovidCase).filter(CovidCase.township_code == ts).order_by(CovidCase.infected_date).all()
+
+            ages = { i : {'m': [None, None], 'f': [None, None]} for i in set(case.age for case in cases) }
+
+            remaining_rec = set()
+            
+            for i in ages.keys():
+                remaining_rec.add((i, 'm'))
+                remaining_rec.add((i, 'f'))
+            
+            remaining_dead = copy.deepcopy(remaining_rec)
+
+            recovered = _init_data('vyleceni', 0, ts, ages, remaining_rec)
+            dead = _init_data('umrti', 1, ts, ages, remaining_dead)
+
+            not_found_set = remaining_rec & remaining_dead
+            for not_found in not_found_set:
+                ages[not_found[0]].pop(not_found[1])
+            
+            for case in cases:
+                indexes = ages[case.age].get(case.gender)
+
+                if indexes is None:
+                    continue
+                
+                rec_index, dead_index = indexes
+
+                recovered_date = None if rec_index is None else recovered[rec_index]['datum']
+                dead_date = None if dead_index is None else dead[dead_index]['datum']
+
+                if recovered_date is not None and recovered_date <= case.infected_date:
+                    rec_index = _find_next_match(rec_index, recovered, case, True)
+                    indexes[0] = rec_index
+                    recovered_date = None if rec_index is None else recovered[rec_index]['datum']
+
+                if dead_date is not None and dead_date <= case.infected_date:
+                    dead_index = _find_next_match(dead_index, dead, case, True)
+                    indexes[1] = dead_index
+                    dead_date = None if dead_index is None else dead[dead_index]['datum']
+
+                if recovered_date is not None and dead_date is not None:
+                    if recovered_date <= dead_date:
+                        case.recovered_date = recovered_date
+                        indexes[0] = _find_next_match(rec_index, recovered, case)
+                    else:
+                        case.death_date = dead_date
+                        indexes[1] = _find_next_match(dead_index, dead, case)
                 else:
-                    case.death_date = final_date[0]
-
+                    if recovered_date is not None:
+                        case.recovered_date = recovered_date
+                        indexes[0] = _find_next_match(rec_index, recovered, case)    
+                    elif dead_date is not None:
+                        case.death_date = dead_date
+                        indexes[1] = _find_next_match(dead_index, dead, case)
+                    
+                    if indexes[0] is None and indexes[1] is None:
+                        ages[case.age].pop(case.gender)
             db.commit()
             
             
