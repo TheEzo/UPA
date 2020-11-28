@@ -7,7 +7,7 @@ import numpy as np
 
 
 if __name__ == '__main__':
-    fig_dir = os.path.join(os.path.dirname(__file__), 'figures')
+    fig_dir = os.path.join(os.path.dirname(__file__), 'web', 'static')
     sql_connector = 'mysql+pymysql://root:root@127.0.0.1/upa'
 
     q1 = """select
@@ -101,8 +101,8 @@ order by c.infected_date;
 
     q5 = """select
     c.infected_date as `infected_date`,
-    (select count(*) from covidcase where infected_date = c.infected_date and gender = 'm') as `muzi`,
-    (select count(*) from covidcase where infected_date = c.infected_date and gender = 'f') as `zeny`,
+    (select count(*) from covidcase where infected_date = c.infected_date and gender = 'm' and death_date is not null) as `muzi`,
+    (select count(*) from covidcase where infected_date = c.infected_date and gender = 'f' and death_date is not null) as `zeny`,
     count(*)
     from covidcase c
     group by c.infected_date
@@ -117,5 +117,5 @@ order by c.infected_date;
     plt.legend(loc='best')
     plt.tight_layout()
     # plt.show()
-    plt.savefig(os.path.join(fig_dir, 'increase_by_sex.png'))
+    plt.savefig(os.path.join(fig_dir, 'mortality_by_sex.png'))
 

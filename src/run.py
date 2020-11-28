@@ -79,9 +79,10 @@ def main():
     
     logger.info("Finished: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
+
 def create_app():
     # create and configure the app
-    app = Flask(__name__, template_folder='web/templates')
+    app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
     app.config.from_mapping(
         SECRET_KEY='UPA',
     )
