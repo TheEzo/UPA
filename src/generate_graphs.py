@@ -122,6 +122,26 @@ def generate(_from='2019-01-01', _to='2022-12-30', tmp=False):
     # plt.show()
     plt.savefig(os.path.join(fig_dir, f'{ext}mortality_by_sex.png'))
 
+    q6 = f"""select
+            c.infected_date,
+            count(*),
+            (select count(*) from covidcase c2 where c2.infected_date <= c.infected_date and death_date is not null) as cum_sum
+        from covidcase c
+        where c.infected_date between DATE("{_from}") and DATE("{_to}")
+        group by c.infected_date
+        order by c.infected_date;"""
+
+    fig, ax = plt.subplots()
+    data = pd.read_sql_query(q6, 'mysql+pymysql://root:root@127.0.0.1/upa')
+    ax = data.plot(ax=ax, x='infected_date', y='cum_sum', label='Kumulativní počet', color='grey')
+    plt.fill_between(data['infected_date'].values, data['cum_sum'].values, y2=0, color='grey')
+    plt.xticks(rotation='vertical')
+    plt.legend().remove()
+    ax.set_xlabel('')
+    # plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(fig_dir, f'{ext}cumulative_deaths.png'))
+
 
 if __name__ == '__main__':
     generate()
