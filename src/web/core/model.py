@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, create_engine, Integer, Date, CheckConstraint, ForeignKey
+from sqlalchemy import Column, String, create_engine, Integer, Date, CheckConstraint, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -46,6 +46,14 @@ class NeighbourTownship(Base):
     code1 = Column(String(10), ForeignKey(Township.code), primary_key = True)
     code2 = Column(String(10), ForeignKey(Township.code), primary_key = True)
 
+class TownshipReproductionRateCache(Base):
+    __tablename__ = 'township_reproduction_rate_cache'
+
+    code = Column(String(10), ForeignKey(Township.code), primary_key=True) # lau code
+    month = Column(Date, primary_key=True)
+
+    reproduction_rate = Column(Float, nullable=False)
+
 class CovidCase(Base):
     __tablename__ = 'covidcase'
 
@@ -63,6 +71,10 @@ class CovidCase(Base):
     infected_date = Column(Date, nullable=False, index=True)
     recovered_date = Column(Date, nullable=True)
     death_date = Column(Date, nullable=True)
+
+class DataConsistency(Base):
+    __tablename__ = 'dataconsistency'
+    code = Column(String(10), primary_key = True)
 
 if __name__ == '__main__':
     Base.metadata.create_all()

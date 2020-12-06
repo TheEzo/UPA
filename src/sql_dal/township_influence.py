@@ -2,10 +2,11 @@ import logging
 import os
 import re
 from graphviz import Digraph
-from sqlalchemy import func
-
+from sqlalchemy import func, and_
+from datetime import date, timedelta
 from web.core.session import db_session
 from web.core.model import Region, Township, Country, CovidCase, NeighbourTownship
+import calendar
 
 
 logger = logging.getLogger('import_data')
@@ -60,21 +61,43 @@ def township_influence_graph(townships, neighbours, directory=os.path.join(os.pa
     # f.view()
 
 
-def township_influence_townships(day1='2020-11-18', day2='2020-11-19'):
+def township_influence_townships(month_date='2020-01-01'):
+    if type(month_date) is str:
+        month_date = date.fromisoformat(month_date)
+    elif type(month_date) is not date:
+        raise Exception('invalid date')
+
+    last_day = calendar.monthrange(month_date.year, month_date.month)
+
+    if month_date.month == date.today().month:  # v ramci mesice
+        day1 = date.today() + timedelta(days=-12)
+        day2 = date.today() + timedelta(days=-6)
+
+        day3 = date.today() + timedelta(days=-7)
+        day4 = date.today() + timedelta(days=-1)
+    else:
+        day1 = date(month_date.year, month_date.month, 1)
+        day2 = date(month_date.year, month_date.month, 15)
+
+        day3 = day2
+        day4 = date(month_date.year, month_date.month, last_day[1])
+
     townships = {}
     with db_session() as db:
         for ts in db.query(Township.code, Township.name).all():
             townships[ts.code] = TSInfluence(ts.code, ts.name)
         logger.info("Townships count: {0}".format(len(townships)))
-        neighbours = db.query(NeighbourTownship.code1, NeighbourTownship)
-        cases_1 = db.query(CovidCase.township_code, func.count(CovidCase.id).label('count')).filter(CovidCase.infected_date == day1).group_by(CovidCase.township_code)
+        
+        cases_1 = db.query(CovidCase.township_code, func.count(CovidCase.id).label('count')).filter(and_(CovidCase.infected_date >= day1, CovidCase.infected_date <= day2)).group_by(CovidCase.township_code)
         logger.info(cases_1)
         for c1 in cases_1:
             townships[c1.township_code].cases1 = c1.count
-        cases_2 = db.query(CovidCase.township_code, func.count(CovidCase.id).label('count')).filter(CovidCase.infected_date == day2).group_by(CovidCase.township_code)
+
+        cases_2 = db.query(CovidCase.township_code, func.count(CovidCase.id).label('count')).filter(and_(CovidCase.infected_date > day3, CovidCase.infected_date <= day4)).group_by(CovidCase.township_code)
         logger.info(cases_2)
         for c1 in cases_2:
             townships[c1.township_code].cases2 = c1.count
+
     return townships
 
 def township_influence_neighbours(day1='2020-11-18', day2='2020-11-19'):

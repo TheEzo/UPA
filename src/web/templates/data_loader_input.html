@@ -1,0 +1,68 @@
+{% macro import_input(name, number, code) %}
+<div class="col-md-4" id="data-form-{{number}}" name="{{name}}">
+<div class="alert alert-success data-form-alert" role="alert">
+    <span> {{name}} </span> <span class="alert-additional-text" style="float:right;"></span>
+</div>
+
+<div class="form-group data-form-switch">
+
+    <div class="form-check form-check-inline">
+        <input class="form-check-input data-form-switch-file" type="radio" name="radio-options-{{number}}"
+            id="radio-options-{{number}}a" value="Soubor" checked disabled>
+        <label class="form-check-label" for="radio-options-{{number}}a">Soubor</label>
+    </div>
+
+    <div class="form-check form-check-inline">
+        <input class="form-check-input data-form-switch-url" type="radio" name="radio-options-{{number}}"
+            id="radio-options-{{number}}b" value="URL" disabled>
+        <label class="form-check-label" for="radio-options-{{number}}b">URL</label>
+    </div>
+
+</div>
+
+<div class="form-group data-form-file" style="padding-left: 3em;">
+
+    <div class="form-check data-form-file-default">
+        <input class="form-check-input" type="radio" name="radio-file-{{number}}" id="radio-file-{{number}}a"
+            value="Soubor" checked disabled>
+        <label class="form-check-label" for="radio-file-{{number}}a">Výchozí <a
+                href="http://apl.czso.cz/iSMS/cisexp.jsp?kodcis=108&typdat=1&cisvaz=109_210&datpohl=20.10.2020&cisjaz=203&format=2&separator=,">soubor</a>
+        </label>
+        <input type="hidden" name="code" value="{{code}}">
+    </div>
+
+    <div class="form-group data-form-file-custom">
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="radio-file-{{number}}" id="radio-file-{{number}}b"
+                value="URL" disabled>
+            <label class="form-check-label text-muted" for="radio-file-{{number}}b">Vlastní soubor</label>
+        </div>
+
+        <div class="data-form-file-load">
+            <form class="fileupload" action="/upload" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="code" value="{{code}}">
+                <input id="fileupload-{{number}}" style="display: none;" class="form-control-file" type="file" name="file" accept=".csv,.json" disabled/>
+            </form>
+            
+            <input type="button" value="Procházet..." onclick="document.getElementById('fileupload-{{number}}').click();" class="btn btn-outline-secondary btn-sm" disabled/>
+            
+            <div class="data-form-file-load-selected" style="display: none;">
+                <span style="font-weight: bold;">Zvolený soubor: </span>
+                <span class="data-form-file-load-selected-text truncate"></span>
+            </div> 
+            
+        </div>
+    </div>
+
+</div>
+
+<div class="data-form-url" style="display: none;">
+    <div class="form-group ">
+        <label for="data-form-url-{{number}}">URL souboru</label>
+        <input name="data-form-url-{{number}}" type="text" class="form-control" placeholder="http://path/to/file.com">
+        <input type="hidden" name="code" value="{{code}}">
+    </div>
+</div>
+</div>
+{% endmacro %}

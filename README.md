@@ -6,6 +6,7 @@
 ## Requirements
  - Docker 18.03+ (including docker-compose etc.)
  - Python 3.6+ 
+ - virtualenv
 
 ## Usage
 ```bash

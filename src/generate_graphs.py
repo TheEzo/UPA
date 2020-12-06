@@ -142,6 +142,32 @@ def generate(_from='2019-01-01', _to='2022-12-30', tmp=False):
     plt.tight_layout()
     plt.savefig(os.path.join(fig_dir, f'{ext}cumulative_deaths.png'))
 
+    x = []
+    y = []
+    z = []
 
+    rows = []
+
+    custom_query = f"""
+            select  (CASE
+                        WHEN age < 11 THEN 0
+                        WHEN age > 80 THEN 8
+                        ELSE (age-1) DIV 10
+                    END) as age,
+                    IF(death_date is not null, DATEDIFF(death_date, infected_date), DATEDIFF(recovered_date, infected_date)) as diff, 
+                   (death_date is not null) as isdead
+            from covidcase 
+            where infected_date between "{_from}" and "{_to}" and (death_date is not null or recovered_date is not null)
+            """
+    
+    from sqlalchemy import create_engine
+
+    engine = create_engine(sql_connector)
+    with engine.connect() as con:
+        for row in con.execute(custom_query):
+            # rows.append(row)
+            x.append(row[0])
+            y.append(row[1] // 6)
+            z.append(row[2])
 if __name__ == '__main__':
     generate()

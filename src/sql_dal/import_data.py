@@ -18,7 +18,7 @@ def import_countries():
 
         resp = helpers.scan(
             es,
-            index = 'staty',
+            index = 'states',
             scroll = '3m',
             size = 10,
             query={'_source': ['CHODNOTA', 'ZKRTEXT']}
@@ -47,7 +47,7 @@ def import_townships_and_regions():
 
         resp = helpers.scan(
             es,
-            index = 'kraje_a_okresy',
+            index = 'regions',
             scroll = '3m',
             size = 10,
             query={'_source': ['CHODNOTA1', 'TEXT1', 'CHODNOTA2', 'TEXT2']}
@@ -86,7 +86,7 @@ def import_township_neighbours():
     with db_session() as db:
         resp = helpers.scan(
             es,
-            index = 'sousedni_okresy',
+            index = 'neighbours',
             scroll = '3m',
             size = 10,
             query={'_source': ['HODNOTA1', 'HODNOTA2']}
@@ -118,10 +118,12 @@ def import_covid_cases():
 
     # if 'CZ099Y' not in township_codes: # mimo uzemi cr
 
+    gender_map = { 'M': 'm', 'Z': 'f' }
+
     with db_session() as db:
         resp = helpers.scan(
             es,
-            index = 'osoby',
+            index = 'infected',
             scroll = '3m',
             size = 1000
         )
@@ -129,10 +131,14 @@ def import_covid_cases():
         for doc in resp:
             case = doc['_source']
             
-            sex = 'm' if case['pohlavi'] == 'M' else 'f'
+            sex = gender_map.get(case['pohlavi'], None)
+
+            if sex is None:
+                continue
+
             country = 'CZ' if case['nakaza_v_zahranici'] is None else case['nakaza_zeme_csu_kod']
 
-            if case['okres_lau_kod'] == 'CZ099Y' or country is None:
+            if case['okres_lau_kod'] == 'CZ099Y' or country is None or len(country) == 0:
                 continue
 
             db.add(CovidCase(age=case['vek'], gender=sex, infected_date=case['datum'], township_code=case['okres_lau_kod'], country_code=country))
@@ -198,7 +204,8 @@ def import_cases_recovered_death():
 
 
     with db_session() as db:
-        township_codes = [i[0] for i in db.query(Township.code).all()]
+        townships = { i[0] : i[1] for i in db.query(Township.code, Township.name).all() }
+        township_codes = [i for i in townships.keys()]
 
         for ts in township_codes:
             cases = db.query(CovidCase).filter(CovidCase.township_code == ts).order_by(CovidCase.infected_date).all()
@@ -213,8 +220,8 @@ def import_cases_recovered_death():
             
             remaining_dead = copy.deepcopy(remaining_rec)
 
-            recovered = _init_data('vyleceni', 0, ts, ages, remaining_rec)
-            dead = _init_data('umrti', 1, ts, ages, remaining_dead)
+            recovered = _init_data('recovered', 0, ts, ages, remaining_rec)
+            dead = _init_data('dead', 1, ts, ages, remaining_dead)
 
             not_found_set = remaining_rec & remaining_dead
             for not_found in not_found_set:
@@ -259,6 +266,8 @@ def import_cases_recovered_death():
                     if indexes[0] is None and indexes[1] is None:
                         ages[case.age].pop(case.gender)
             db.commit()
+
+            yield townships[ts]
             
             
 

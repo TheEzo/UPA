@@ -1,10 +1,16 @@
 #!/usr/bin/python3
 
+import sys
+sys.path.append("..")
+
+# sys.stdout = open('file.log', 'a+')
+
 import argparse
 import datetime
 import logging
 import os
-import sys
+
+from business_logic.helpers import delete_all
 
 import mysql.connector
 from flask import Flask
@@ -15,7 +21,10 @@ from web.views import init_views
 import sql_dal.import_data as sqlim
 from web.core.session import db_session
 import sql_dal.township_influence as township_influence
-from web.core.model import Base, CovidCase
+from sql_dal.township_influence import township_influence_townships
+import web.core.model as models
+from sqlalchemy import func
+from es_dal.elastic import Elastic
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger('main')
@@ -67,7 +76,7 @@ def main():
         sqlim.import_township_neighbours()
 
         with db_session() as db:
-            db.query(CovidCase).delete()
+            db.query(models.CovidCase).delete()
             db.commit()
 
         sqlim.import_covid_cases()
@@ -76,7 +85,10 @@ def main():
     elif args.query2:
         township_influence.township_influence()
         logger.info("Finished test2: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
-    
+    else:
+        app = create_app()
+        app.run(host='0.0.0.0', port='80', debug=True)
+
     logger.info("Finished: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
 
@@ -85,13 +97,24 @@ def create_app():
     app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
     app.config.from_mapping(
         SECRET_KEY='UPA',
+        UPLOAD_FOLDER='work/'
     )
 
     init_views(app)
 
     return app
 
-
 if __name__ == '__main__':
-    Base.metadata.create_all()
+    models.Base.metadata.create_all()
+
+    # from generate_graphs import generate
+    # generate()
+    # sys.exit(0)
+
+    with db_session() as db:
+        imp_row = db.query(models.DataConsistency).filter(models.DataConsistency.code == 'import').first()
+    
+    if imp_row is not None:
+        delete_all()
+
     sys.exit(main())

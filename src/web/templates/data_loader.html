@@ -1,0 +1,490 @@
+{% from 'data_loader_input.html' import import_input %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>UPA - projekt</title>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+    integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+
+  <style>
+    .truncate {
+      width: 250px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12 text-center">
+        <h1>UPA - projekt</h1>
+      </div>
+      <div class="col-lg-12">
+        <h5>Řešitelé:</h5>
+        <div class="row">
+          <div class="col-md-4" style="float: left;">
+            <ul>
+              <li>Kapoun Petr - xkapou04</li>
+              <li>Nováček pavel - xnovac16</li>
+              <li>Willaschek Tomáš - xwilla00</li>
+            </ul>
+          </div>
+          <div class="col-md-4" id="submit-status">
+            <div id="submit-status-import-start" class="text-primary" style="display: none; font-weight: bold;">
+              Spouští se import...
+            </div>
+            <div id="submit-status-success" style="display: none;">
+              <p class="text-success" style="font-weight: bold;">Validace byla dokončena.</p>
+              <p>Nyní můžete tlačítkem <span class="text-success" style="font-weight: bold;">Importovat</span> zahájit
+                import a zpracování nahraných dat. </p>
+              <p>Pokud chcete provést další změny ve vstupních souborech, pak se vraťte tlačítkem <span
+                  class="text-warning" style="font-weight: bold;">Zpět</span>.</p>
+            </div>
+            <div id="submit-status-top" style="display: none;">
+              <div>
+                <span>Zpracovávám </span> <span id="submit-status-name" style="font-weight: bold;"></span>
+              </div>
+              <div id="submit-status-file" style="display: none;">
+                <span>Nahrávám soubor </span> <span style="font-weight: bold;" id="submit-status-file-name"></span>:
+                <span id="submit-status-file-progress"></span>
+              </div>
+              <div id="submit-status-url" style="display: none;">
+                <span>Stahuji soubor ze zadaného URL: </span> <span id="submit-status-url-progress"></span>
+              </div>
+              <div id="submit-status-error" style="display: none;">
+                <p id="submit-status-error-title"></p>
+                <p style="font-weight: bold; color: red;" id="submit-status-error-message"></p>
+                <p>Opravte chybu a nechte zpracovat data znovu.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 d-flex justify-content-center">
+            <div>
+              <button type="submit" id="submit-button" class="btn btn-primary"
+                onclick="javascript: validateInputs();" disabled>Zpracovat</button>
+              <button type="submit" id="return-button" style="display: none;" onclick="javascript: returnBack();"
+                class="btn btn-warning">Pokračovat</button>
+
+              <button type="submit" id="process-button" style="display: none;" onclick="javascript: processData();"
+                class="btn btn-success">Importovat</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="row mb-5">
+            {{ import_input('Státy', 1, 'states') }}
+            {{ import_input('Kraje a okresy', 2, 'regions') }}
+            {{ import_input('Sousedící okresy', 3, 'neighbours') }}
+          </div>
+
+          <div class="row mb-5">
+            {{ import_input('Nakažení', 4, 'infected') }}
+            {{ import_input('Vyléčení', 5, 'recovered') }}
+            {{ import_input('Úmrtí', 6, 'dead') }}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
+    crossorigin="anonymous"></script>
+
+  <script type="text/javascript" src="{{ url_for('static', filename='js/vendor/jquery.ui.widget.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.iframe-transport.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.fileupload.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.fileupload-process.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.fileupload-validate.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.fileupload-ui.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/sse.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/mutex.js') }}"></script>
+
+  <script type="text/javascript">
+    function canSubmit() {
+      const anyErrors = $('div.alert').filter(function (index) {
+        return $(this).hasClass('alert-danger');
+      }).length > 0;
+
+      if (anyErrors) {
+        $('#submit-button').prop('disabled', true);
+      }
+      else {
+        $('#submit-button').prop('disabled', false);
+      }
+    }
+
+    function inputChanged(input, isValid) {
+      const el = $(input);
+
+      const isFileInput = el.prop('type') === 'file';
+      const parentClass = isFileInput ? '.data-form-file' : '.data-form-url';
+
+      const parent = el.parents(parentClass).first();
+      const alert = parent.siblings('.data-form-alert').first();
+
+      if (typeof isValid !== 'boolean') {
+        if (isFileInput) {
+          isValid = el.parents('.data-form-file-load').first().find('.data-form-file-load-selected-text').text().length > 0;
+        }
+        else {
+          isValid = el.val()
+        }
+      }
+
+      if (isValid) {
+        alert.children('.alert-additional-text').text('');
+        alert.removeClass('alert-danger');
+        alert.addClass('alert-success');
+      }
+      else {
+        alert.children('.alert-additional-text').text(isFileInput ? 'Zvolte soubor!' : 'Doplňte URL!');
+        alert.removeClass('alert-success');
+        alert.addClass('alert-danger');
+      }
+    }
+
+    async function processData() {
+      let error = null;
+
+      $('#return-button').hide();
+      $('#return-button').text('Pokračovat');
+
+      $('#process-button').hide();
+      $('#submit-status-success').hide();
+
+      $('#submit-status-import-start').show();
+
+      try {
+        const result = await $.get('/start');
+
+        if ('error' in result) {
+          error = result['error'];
+        }
+      } catch (error) {
+        error = error.responseText;
+      }
+
+      if (error !== null) {
+        $('#submit-status-error-title').text('Při spouštění importu nastala chyba:');
+        $('#submit-status-error-message').text(error);
+
+        $('#submit-status-file').hide();
+        $('#submit-status-url').hide();
+
+        $('#submit-status-import-start').hide();
+
+        $('#submit-status-error').show();
+        $('#submit-status-top').show();
+        $('#return-button').show();
+
+      }
+      else {
+        $('#submit-status-import-start').text('Import byl úspěšně zahájen. Dojde k přesměrování...');
+        window.location.replace('/status');
+      }
+    }
+
+    function returnBack() {
+      $('#return-button').hide();
+      $('#process-button').hide();
+      $('#submit-button').show();
+
+      $('#return-button').text('Pokračovat');
+
+      notDisabled.prop('disabled', false);
+
+      $('.alert').removeClass('alert-warning');
+      $('.alert').removeClass('alert-danger');
+      $('.alert').addClass('alert-success');
+
+      $('#submit-status-top').hide();
+      $('#submit-status-file').hide();
+      $('#submit-status-error').hide();
+      $('#submit-status-success').hide();
+      $('#submit-status-import-start').hide();
+
+      $('#submit-status-name').text('');
+      $('#submit-status-file-name').text('');
+      $('#submit-status-file-progress').text('');
+      $('#submit-status-error-title').text('');
+      $('#submit-status-error-message').text('');
+    }
+
+    var notDisabled = null;
+
+    async function validateInputs() {
+      notDisabled = $('input:visible').filter(function (index, el) {
+        return !$(el).prop('disabled')
+      });
+
+      notDisabled.prop('disabled', true);
+      $('#submit-button').hide();
+      $('.alert').toggleClass('alert-success alert-warning');
+      $('#submit-status-top').show();
+
+      for (let i = 1; i < 7; i++) {
+        let currentForm = $(`#data-form-${i}`);
+
+        $('#submit-status-name').text(currentForm.attr('name'));
+
+        if (currentForm.find('.data-form-url:visible').length === 0) { //file
+          const fileForm = currentForm.find('.data-form-file').first();
+          const isCheckedDefault = fileForm.find('label.text-muted').first().closest('div.data-form-file-custom,div.data-form-file-default').hasClass('data-form-file-custom');
+
+          if (isCheckedDefault) { // vychozi soubor
+            const inp = fileForm.find('.data-form-file-default input[type="hidden"]').first();
+
+            var fd = new FormData();
+            fd.append(inp.attr('name'), inp.val());
+
+            let error = null;
+
+            try {
+              const result = await $.ajax({
+                url: '/copy',
+                data: fd,
+                processData: false,
+                contentType: false,
+                type: 'POST',
+                dataType: "json"
+              });
+
+              if ('error' in result) {
+                error = result['error'];
+              }
+            } catch (error) {
+              error = error.responseText;
+            }
+
+            if (error !== null) {
+              fileForm.siblings('.alert').first().toggleClass('alert-warning alert-danger');
+
+              $('#submit-status-error-title').text('Použití výchozího souboru se nezdařilo: ');
+              $('#submit-status-error-message').text(error);
+              $('#submit-status-error').show();
+              $('#return-button').show();
+              return;
+            }
+            else {
+              fileForm.siblings('.alert').first().toggleClass('alert-success alert-warning');
+            }
+          }
+          else {
+            $('#submit-status-file-name').text(files[i].files[0].name);
+            $('#submit-status-file-progress').text('0 %');
+
+            $('#submit-status-file').show();
+
+            await files[i].submit();
+
+            $('#submit-status-file').hide();
+
+            if (!response[i]['success']) {
+              fileForm.siblings('.alert').first().toggleClass('alert-danger alert-warning');
+
+              $('#submit-status-error-title').text('Nahrávání souboru se nezdařilo: ');
+              $('#submit-status-error-message').text(response[i]['error']);
+              $('#submit-status-error').show();
+
+              $('#return-button').show();
+
+              return;
+            }
+            else {
+              fileForm.siblings('.alert').first().toggleClass('alert-success alert-warning');
+            }
+          }
+        }
+        else { //url
+          const urlInput = currentForm.find('.data-form-url input[type="text"]').first();
+          const alert = currentForm.find('.alert').first();
+          const urlCode = urlInput.siblings('input[type="hidden"]').first().val();
+
+          $('#submit-status-url-progress').text('0 %');
+          $('#submit-status-url').show();
+
+          var source = new SSE("/download", { headers: { 'Content-Type': 'application/json' }, 'payload': JSON.stringify({ url: urlInput.val(), code: urlCode }) });
+
+          var mutex = new MutexPromise('submit-url-mutex', { timeout: Number.MAX_SAFE_INTEGER, interval: 1000 });
+
+          let errorOccurred = false;
+
+          source.onmessage = function (event) {
+            let data = JSON.parse(event.data);
+
+            if ('progress' in data) {
+              $('#submit-status-url-progress').text(`${data['progress']} %`);
+            }
+            else {
+              $('#submit-status-url').hide();
+              $('#submit-status-url-progress').text('');
+
+              errorOccurred = data['success'] !== true;
+              mutex.unlock();
+
+              if (errorOccurred) {
+                alert.toggleClass('alert-danger alert-warning');
+
+                $('#submit-status-error-title').text('Stahování souboru se nezdařilo: ');
+                $('#submit-status-error-message').text(data['error']);
+                $('#submit-status-error').show();
+
+                $('#return-button').show();
+              }
+              else {
+                alert.toggleClass('alert-success alert-warning');
+              }
+            }
+          };
+
+          source.onerror = function (err) {
+            errorOccurred = true;
+            mutex.unlock();
+
+            alert.toggleClass('alert-danger alert-warning');
+
+            $('#submit-status-error-title').text('Stahování souboru se nezdařilo: ');
+            $('#submit-status-error-message').text(err);
+            $('#submit-status-error').show();
+
+            $('#return-button').show();
+          };
+
+          mutex.lock(); //mutex in js is weird but here its necessary because sse source doesnt implement promise :(
+          source.stream();
+          await mutex.promise();
+
+          if (errorOccurred) {
+            return;
+          }
+        }
+      }
+
+      $('#return-button').text('Zpět');
+
+      $('#process-button').show();
+      $('#return-button').show();
+
+      $('#submit-status-top').hide();
+      $('#submit-status-success').show();
+    }
+
+    const files = [];
+    const response = [];
+
+    $(document).ready(function () {
+      $('#submit-button').prop('disabled', false);
+      $('input[type="radio"].data-form-switch-file').prop('disabled', false);
+      $('input[type="radio"].data-form-switch-url').prop('disabled', false);
+
+      $('div.data-form-file-default input[type="radio"].form-check-input').prop('disabled', false);
+      $('div.data-form-file-custom input[type="radio"].form-check-input').prop('disabled', false);
+     
+      for (let i = 1; i < 7; i++) {
+        $(`#fileupload-${i}`).fileupload({
+          dataType: "json",
+          //xhrFields: {withCredentials: true},
+          add: function (e, data) {
+            files[i] = data;
+            const parent = $(this).parents('.data-form-file-load').first();
+
+            parent.find('.data-form-file-load-selected').show();
+            parent.find('.data-form-file-load-selected-text').text(data.files[0].name);
+
+            inputChanged($(this)); canSubmit();
+          },
+          progress: function (e, data) {
+            var progress = parseInt((data.loaded / data.total) * 100, 10);
+            $('#submit-status-file-progress').text(`${progress.toString()} %`);
+          },
+          done: function (e, data) {
+            response[i] = data.result;
+            $('#submit-status-file-progress').text(`100 %`);
+          }
+        });
+      }
+
+      $('.data-form-switch .form-check .form-check-input').change(function () {
+        const el = $(this);
+        const parent = el.parents('.data-form-switch').first();
+
+        let toHide = '.data-form-url';
+        let toShow = '.data-form-file';
+
+        const isUrl = el.hasClass('data-form-switch-url');
+
+        if (isUrl) {
+          [toHide, toShow] = [toShow, toHide];
+        }
+
+        toHide = parent.siblings(toHide);
+        toShow = parent.siblings(toShow);
+
+        if (!isUrl) {
+          const isCheckedDefault = toShow.find('label.text-muted').first().closest('div.data-form-file-custom,div.data-form-file-default').hasClass('data-form-file-custom');
+
+          if (isCheckedDefault) {
+            inputChanged(toShow.find('input[type="file"]').first(), true);
+          }
+          else {
+            inputChanged(toShow.find('input[type="file"]').first());
+          }
+        }
+        else {
+          inputChanged(toShow.find('input[type="text"]').first());
+        }
+
+        toHide.hide();
+        toShow.show();
+
+        canSubmit()
+      });
+
+      $('.data-form-file .form-check .form-check-input').change(function () {
+        const el = $(this);
+        const parent = el.parents('.data-form-file').first();
+        const def = el.parent().hasClass('data-form-file-default')
+
+        parent.find('label').addClass('text-muted');
+        el.parent().children('label').removeClass('text-muted');
+
+        const fileInput = parent.find('.data-form-file-custom .data-form-file-load input[type="file"]');
+        fileInput.prop('disabled', def);
+        fileInput.parent().siblings('input[type="button"]').prop('disabled', def);
+
+        if (!def) {
+          inputChanged(fileInput);
+        }
+        else {
+          inputChanged(fileInput, true);
+        }
+
+        canSubmit();
+      });
+
+      $('.data-form-url input[type="text"]').keyup(function (event) {
+        inputChanged($(this)); canSubmit();
+      });
+    });
+  </script>
+</body>
+
+</html>

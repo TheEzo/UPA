@@ -1,0 +1,46 @@
+{% macro graph_tab(tabs) -%}
+
+<ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+
+{% for item in tabs %}
+
+    {% if loop.index == 1 %}
+    <li class="nav-item">
+        <a class="nav-link active" id="pills-{{item[0]}}-tab" data-toggle="pill" href="#pills-{{item[0]}}" role="tab" aria-controls="pills-{{item[0]}}" aria-selected="true">{{item[1]}}</a>
+    </li>
+    {% else %}
+    <li class="nav-item">
+        <a class="nav-link" id="pills-{{item[0]}}-tab" data-toggle="pill" href="#pills-{{item[0]}}" role="tab" aria-controls="pills-{{item[0]}}" aria-selected="false">{{item[1]}}</a>
+    </li>
+    {% endif %}
+
+{% endfor %}
+
+</ul>
+
+
+<div class="tab-content" id="pills-tabContent">
+
+{% for item in tabs %}
+
+    {% if loop.index == 1 %}
+    <div class="tab-pane fade show active" id="pills-{{item[0]}}" role="tabpanel" aria-labelledby="pills-{{item[0]}}-tab">
+        <div class="text-center">
+          <h5>{{item[1]}}</h5>
+          <img src="/static/{{ tmp }}{{item[0]}}.png?{{ range(1, 100000) | random }}">
+        </div>
+      </div>
+    {% else %}
+    <div class="tab-pane fade" id="pills-{{item[0]}}" role="tabpanel" aria-labelledby="pills-{{item[0]}}-tab">
+        <div class="text-center">
+          <h5>{{item[1]}}</h5>
+          <img src="/static/{{ tmp }}{{item[0]}}.png?{{ range(1, 100000) | random }}">
+        </div>
+      </div>
+    {% endif %}
+
+{% endfor %}
+
+</div>
+
+{%- endmacro %}

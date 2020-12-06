@@ -1,18 +1,21 @@
 #!/usr/bin/python3
 
+import sys
+sys.path.append("..")
+
 import csv
 import datetime
 import json
 import logging
 import os
-import sys
 import urllib.error
 import urllib.request
 import ssl
 import pandas as pd
 from .elastic import Elastic
 from elasticsearch import helpers
-
+from business_logic.helpers import get_filename_without_extension
+from elasticsearch.client import IndicesClient
 
 logger = logging.getLogger('nosql_fill')
 context = ssl._create_unverified_context()
@@ -82,6 +85,9 @@ def upload_file(src, delete=True):
                 ''.format(src, datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     es = Elastic()
     index_name, src_type = os.path.basename(src).rsplit('.', 1)
+
+    index_name = get_filename_without_extension(index_name)
+
     src_type = src_type.lower()
     logger.info("Database index: {0}, file type: {1}".format(index_name, src_type))
     if delete:
@@ -97,11 +103,19 @@ def upload_file(src, delete=True):
             records=df.where(pd.notnull(df), None).T.to_dict()
             list_records=[records[it] for it in records]
             helpers.bulk(es, list_records, index=index_name)
+
+        es.indices.refresh(index=index_name)
     elif src_type == 'json':
+        es.indices.create(index_name)
+        chunksize = 5000
+
         with open(src,) as f:
-            data = json.load(f)
-        for record in data['data']:
-            es.index(index_name, record)  # insert data to DB
+            data = (json.load(f))['data']
+
+        for i in range(0, len(data), chunksize):
+            helpers.bulk(es, data[i:i + chunksize], index=index_name)
+
+        es.indices.refresh(index=index_name)
     else:
         logger.error("Unsupported file type: {0}".format(src_type))
     logger.info('File uploaded to NoSQL database:\n\t{0}\n\t{1}'
