@@ -4,9 +4,10 @@ import os
 import pandas as pd
 import numpy as np
 
+from sql_dal.township_influence import township_influence_townships, township_influence_neighbours, township_influence_averages
 
-def generate(_from='2019-01-01', _to='2022-12-30', tmp=False):
-    fig_dir = os.path.join(os.path.dirname(__file__), 'web', 'static')
+
+def generate(_from='2019-01-01', _to='2022-12-30', tmp=False, fig_dir=os.path.join(os.path.dirname(__file__), 'web', 'static')):
     sql_connector = 'mysql+pymysql://root:root@127.0.0.1/upa'
 
     ext = 'tmp_' if tmp else ''
@@ -169,5 +170,56 @@ def generate(_from='2019-01-01', _to='2022-12-30', tmp=False):
             x.append(row[0])
             y.append(row[1] // 6)
             z.append(row[2])
+
+def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__), 'web', 'static')):
+    ext = 'tmp_' if tmp else ''
+
+    # prepare values
+    ts = township_influence_townships()
+    nbs = township_influence_neighbours()
+    avgs = township_influence_averages(ts, nbs)
+
+    # sort townships
+    def sort_key(e):
+        return e.ts.get_rep_number()
+    avgs.sort(key=sort_key)
+
+    # prepare lists
+    x = []
+    xnum = range(0, len(avgs))
+    y = []
+    z = []
+
+    # fill lists
+    for avg in avgs:
+        print(avg.ts)
+        x.append(avg.ts.get_rep_number())
+        y.append(avg.avg_neighbours)
+        z.append(avg.avg_all)
+    
+    # generate plot
+    fig, ax = plt.subplots()
+    plt.scatter(xnum, y, marker='^', label="neighbours")
+    plt.scatter(xnum, z, marker='o', label="all")
+    plt.legend(loc='best')
+    plt.xlabel("Townships sorted by RN")
+    plt.ylabel("Average difference of RN")
+    plt.tight_layout()
+    # plt.show()
+    plt.savefig(os.path.join(fig_dir, f'{ext}township_averages_sorted_x.png'))
+
+    # generate plot 2
+    fig, ax = plt.subplots()
+    plt.scatter(x, y, marker='^', label="neighbours")
+    plt.scatter(x, z, marker='o', label="all")
+    plt.legend(loc='best')
+    plt.xlabel("Reproduction number (RN) of a township")
+    plt.ylabel("Average difference of RN")
+    plt.tight_layout()
+    # plt.show()
+    plt.savefig(os.path.join(fig_dir, f'{ext}township_averages_rep_num_x.png'))
+
+
 if __name__ == '__main__':
-    generate()
+    # generate()
+    generate_township()

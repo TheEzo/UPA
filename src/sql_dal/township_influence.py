@@ -106,3 +106,44 @@ def township_influence_neighbours(day1='2020-11-18', day2='2020-11-19'):
         for tn in db.query(NeighbourTownship.code1, NeighbourTownship.code2).all():
             neighbours.append([tn.code1, tn.code2])
     return neighbours
+
+
+class TownshipsAveragesCount(object):
+    
+    def __init__(self, ts):
+        self.ts = ts
+        self.avg_neighbours = 0
+        self.avg_all = 0
+
+    def __str__(self):
+        return "{0}: neighbours {1}, all {2}".format(self.ts, self.avg_neighbours, self.avg_all)
+
+
+def township_influence_averages(townships, neighbours):
+    """Count average neigbour difference and average difference between all"""
+    assert len(townships) > 1
+    ret = []
+    all_rep_nums_count = 0
+    for code, ts in townships.items():
+        print(ts.cases1)
+        print(ts.cases2)
+        tac = TownshipsAveragesCount(ts)
+        all_sum = 0
+        for code2, ts2 in townships.items():
+            all_sum += abs(ts.get_rep_number() - ts2.get_rep_number())
+        tac.avg_all = (all_sum)/(len(townships) - 1)
+        nb_cnt = 0
+        nb_sum = 0
+        for nb in neighbours:
+            # print("compare {0} {1} {1}".format(code, nb[0], nb[1]))
+            if code == nb[0] or code == nb[1]:
+                nb_sum += abs(townships[nb[0]].get_rep_number() - townships[nb[1]].get_rep_number())
+                nb_cnt += 1
+        logger.debug("nb cnt {0}".format(nb_cnt))
+        if nb_cnt > 0:
+            tac.avg_neighbours = nb_sum / nb_cnt
+            ret.append(tac)
+        else:
+            logger.error("township without neighbours")
+    logger.info("Total results: {0}".format(len(ret)))
+    return ret
