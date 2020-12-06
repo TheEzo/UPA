@@ -221,5 +221,5 @@ def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__),
 
 
 if __name__ == '__main__':
-    # generate()
+    generate()
     generate_township()
