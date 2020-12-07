@@ -9,6 +9,7 @@
  - virtualenv
 
 ## Usage
+#### Setup docker 
 ```bash
 $ ./run.sh [-h] [-b] [-sqlr] [-esr]
 ```
@@ -16,6 +17,22 @@ $ ./run.sh [-h] [-b] [-sqlr] [-esr]
  - ```-b``` forces container to rebuild 
  - ```-sqlr``` forces MySQL db to recreate
  - ```-esr``` forces Elastic Search db to recreate
+ 
+#### Setup web
+
+Environment setup
+```bash
+$ ./setup.sh 
+``` 
+
+Run
+```bash
+$ python src/run.py [-f] [-m] [-q] [-w]
+```
+- ```-f``` fill data into NoSQL database
+- ```-m``` migrate data from NoSQL to SQL
+- ```-q``` generate all graphs to src/web/static
+- ```-w``` run web application (possible to upload data from here)
 
 ## Authors
  - Petr Kapoun ([xkapou04](mailto:xkapou04@stud.fit.vutbr.cz))
