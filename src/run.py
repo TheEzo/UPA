@@ -38,12 +38,14 @@ def main():
     args = parser.parse_args()
 
     logger.info("Started: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    work_folder_path = os.path.join(os.path.dirname(__file__), '..', 'work')
+    if not os.path.exists(work_folder_path):
+        os.mkdir(work_folder_path)
     if args.web:
         app = create_app()
         app.run(host='0.0.0.0', port='80', debug=True)
     elif args.fill:
         files = ['states', 'regions', 'neighbours', 'infected', 'recovered', 'dead']
-        work_folder_path = os.path.join(os.path.dirname(__file__), '..', 'work')
 
         es = Elastic()
         es.indices.delete('*')
