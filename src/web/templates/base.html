@@ -81,7 +81,7 @@
 
               <h3>Výsledky dotazu A</h3>
               {% set args=[['cumulative_cases', 'Kumulativní nárůst případů'], ['cumulative_deaths', 'Kumulativní nárůst úmrtí'], ['increase_by_age', 'Denní přírůstek podle věkových skupin'], ['mortality_by_age', 'Smrtnost podle věkových skupin'], ['mortality_by_sex', 'Smrtnost podle pohlaví'], ['external_country', 'Původ nákazy (pro více než 10 případů)']]  %}
-              {{ graph_tab(args) }}
+              {{ graph_tab(args, tmp) }}
 
             </div>
           </div>

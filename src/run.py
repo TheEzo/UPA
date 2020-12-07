@@ -103,13 +103,10 @@ def create_app():
     init_views(app)
 
     return app
+   
 
 if __name__ == '__main__':
     models.Base.metadata.create_all()
-
-    # from generate_graphs import generate
-    # generate()
-    # sys.exit(0)
 
     with db_session() as db:
         imp_row = db.query(models.DataConsistency).filter(models.DataConsistency.code == 'import').first()

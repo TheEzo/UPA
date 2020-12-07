@@ -1,4 +1,4 @@
-{% macro graph_tab(tabs) -%}
+{% macro graph_tab(tabs, tmp) -%}
 
 <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
 
@@ -20,6 +20,12 @@
 
 
 <div class="tab-content" id="pills-tabContent">
+
+{% if tmp %}
+  {% set tmp = 'tmp_' %}
+{% else %}
+  {% set tmp = '' %}
+{% endif %}
 
 {% for item in tabs %}
 

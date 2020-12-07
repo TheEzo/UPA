@@ -86,15 +86,15 @@
 
         <div>
           <div class="row mb-5">
-            {{ import_input('Státy', 1, 'states') }}
-            {{ import_input('Kraje a okresy', 2, 'regions') }}
-            {{ import_input('Sousedící okresy', 3, 'neighbours') }}
+            {{ import_input('Státy', 1, 'states', 'http://apl.czso.cz/iSMS/cisexp.jsp?kodcis=1186&typdat=0&cisvaz=86_275&datpohl=25.11.2020&cisjaz=203&format=2&separator=,') }}
+            {{ import_input('Kraje a okresy', 2, 'http://apl.czso.cz/iSMS/cisexp.jsp?kodcis=108&typdat=1&cisvaz=109_210&datpohl=20.10.2020&cisjaz=203&format=2&separator=,') }}
+            {{ import_input('Sousedící okresy', 3, 'neighbours', None) }}
           </div>
 
           <div class="row mb-5">
-            {{ import_input('Nakažení', 4, 'infected') }}
-            {{ import_input('Vyléčení', 5, 'recovered') }}
-            {{ import_input('Úmrtí', 6, 'dead') }}
+            {{ import_input('Nakažení', 4, 'infected', 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/osoby.csv') }}
+            {{ import_input('Vyléčení', 5, 'recovered', 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/vyleceni.csv') }}
+            {{ import_input('Úmrtí', 6, 'dead', 'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/umrti.csv') }}
           </div>
 
         </div>

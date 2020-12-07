@@ -167,7 +167,27 @@ def generate(_from='2019-01-01', _to='2022-12-30', tmp=False):
         for row in con.execute(custom_query):
             # rows.append(row)
             x.append(row[0])
-            y.append(row[1] // 6)
+            y.append(row[1])
             z.append(row[2])
+
+
+    data = {'apples': 10, 'oranges': 15, 'lemons': 5, 'limes': 20}
+    names = list(data.keys())
+    values = list(data.values())
+
+    fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True)
+    axs[0].bar(names, values)
+    axs[1].scatter(names, values)
+    axs[2].plot(names, values)
+    fig.suptitle('Categorical Plotting')
+
+    plt.hist()
+
+    fig = plt.subplots(figsize =(10, 7)) 
+    # Creating plot 
+    plt.hist2d(x, y) 
+    # plot.title("Simple 2D Histogram") 
+    plt.savefig(os.path.join(fig_dir, f'{ext}custom_query.png'))
+    
 if __name__ == '__main__':
     generate()

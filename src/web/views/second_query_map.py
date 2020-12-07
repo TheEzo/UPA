@@ -20,8 +20,6 @@ from datetime import date
 from ..core.model import DataConsistency, Township, TownshipReproductionRateCache
 from sqlalchemy import and_
 
-colors = ("aliceblue", "antiquewhite", "aqua", "aquamarine", "azure", "beige", "bisque", "black", "blanchedalmond", "blue", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "cornsilk", "crimson", "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray", "darkgreen", "darkgrey", "darkkhaki", "darkmagenta", "darkolivegreen", "darkorange", "darkorchid", "darkred", "darksalmon", "darkseagreen", "darkslateblue", "darkslategray", "darkslategrey", "darkturquoise", "darkviolet", "deeppink", "deepskyblue", "dimgray", "dimgrey", "dodgerblue", "firebrick", "floralwhite", "forestgreen", "fuchsia", "gainsboro", "ghostwhite", "gold", "goldenrod", "gray", "green", "greenyellow", "grey", "honeydew", "hotpink", "indianred", "indigo", "ivory", "khaki", "lavender", "lavenderblush", "lawngreen", "lemonchiffon", "lightblue", "lightcoral", "lightcyan", "lightgoldenrodyellow", "lightgray", "lightgreen", "lightgrey", "lightpink", "lightsalmon", "lightseagreen", "lightskyblue", "lightslategray", "lightslategrey", "lightsteelblue", "lightyellow", "lime", "limegreen", "linen", "magenta", "maroon", "mediumaquamarine", "mediumblue", "mediumorchid", "mediumpurple", "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturquoise", "mediumvioletred", "midnightblue", "mintcream", "mistyrose", "moccasin", "navajowhite", "navy", "oldlace", "olive", "olivedrab", "orange", "orangered", "orchid", "palegoldenrod", "palegreen", "paleturquoise", "palevioletred", "papayawhip", "peachpuff", "peru", "pink", "plum", "powderblue", "purple", "red", "rosybrown", "royalblue", "saddlebrown", "salmon", "sandybrown", "seagreen", "seashell", "sienna", "silver", "skyblue", "slateblue", "slategray", "slategrey", "snow", "springgreen", "steelblue", "tan", "teal", "thistle", "tomato", "turquoise", "violet", "wheat", "white", "whitesmoke", "yellow", "yellowgreen")
-
 class TownshipMap:
     def __init__(self, code, name, points):
         self.code = code
@@ -137,8 +135,6 @@ def get_map(month_from='2020-01-01', month_to='2020-12-01'):
 
         svg_townships = {i : [f'<svg id="map-{i}" width="{max_x + 20}" height="{max_y + 20}" style="display: none;">', _get_defs(i)] for i in range(month_from.month, month_to.month + 1)}
 
-        # id="{ts.code}"
-
         for ts in townships.values():
             path = ts.get_path()
             
@@ -164,15 +160,6 @@ def get_map(month_from='2020-01-01', month_to='2020-12-01'):
 
                 med = np.median(same, axis=0)
 
-                # mid_x = 0
-                # mid_y = 0
-
-                # for x, y in same:
-                #     mid_x = mid_x + x
-                #     mid_y = mid_y + y
-
-                # mid_x = mid_x / len(same)
-                # mid_y = mid_y / len(same)
                 tx = round((med[0] - ts.x_middle) / 1.25)
                 ty = round((med[1] - ts.y_middle) / 1.25)
 

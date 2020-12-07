@@ -245,6 +245,8 @@ class ImportingThread(threading.Thread):
 
                 self.messages.append(_format_import_msg(f'Spočteny reprodukční čísla pro {month}. měsíc.'))
 
+            generate()
+
             with db_session() as db:
                 imp_row = db.query(DataConsistency).filter(DataConsistency.code == 'import').one()
                 db.add(DataConsistency(code='valid'))
@@ -372,20 +374,23 @@ class CopyFromData(MethodView):
 class Base(MethodView):
     def get(self):
         influence_map = None
+        tmp = False
         months=(1, 12)
 
         if request.args:
             args = request.args
+            tmp = True
 
             from_date = datetime.date.fromisoformat(args['from'])
             to_date = datetime.date.fromisoformat(args['to'])
            
             months = (from_date.month, to_date.month)
 
-            generate(args['from'], args['to'])
+            generate()
+            generate(args['from'], args['to'], tmp)
             influence_map = get_map(from_date, to_date)
             
-        return render_template('base.html', map_data=influence_map if influence_map else get_map(), months=months)
+        return render_template('base.html', map_data=influence_map if influence_map else get_map(), months=months, tmp=tmp)
 
 
 registered_routes = {'/', '/erase', '/status', '/dataloader', '/upload', '/download', '/copy', '/start'}

@@ -1,4 +1,4 @@
-{% macro import_input(name, number, code) %}
+{% macro import_input(name, number, code, url) %}
 <div class="col-md-4" id="data-form-{{number}}" name="{{name}}">
 <div class="alert alert-success data-form-alert" role="alert">
     <span> {{name}} </span> <span class="alert-additional-text" style="float:right;"></span>
@@ -25,8 +25,13 @@
     <div class="form-check data-form-file-default">
         <input class="form-check-input" type="radio" name="radio-file-{{number}}" id="radio-file-{{number}}a"
             value="Soubor" checked disabled>
-        <label class="form-check-label" for="radio-file-{{number}}a">Výchozí <a
-                href="http://apl.czso.cz/iSMS/cisexp.jsp?kodcis=108&typdat=1&cisvaz=109_210&datpohl=20.10.2020&cisjaz=203&format=2&separator=,">soubor</a>
+
+        {% if url %}
+            <label class="form-check-label" for="radio-file-{{number}}a">Výchozí <a href="{{url}}">soubor</a>
+        {% else %}
+            <label class="form-check-label" for="radio-file-{{number}}a">Výchozí soubor
+        {% endif %}
+        
         </label>
         <input type="hidden" name="code" value="{{code}}">
     </div>
