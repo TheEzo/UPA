@@ -210,26 +210,10 @@ class ImportingThread(threading.Thread):
                 fill_data(path)
                 self.messages.append(_format_import_msg(f'Soubor {Path(path).name} byl nahrán do NoSQL databáze.'))
             
-            print_func = lambda msg: self.messages.append(_format_import_msg(msg))
+            def _print(msg):
+                self.messages.append(_format_import_msg(msg))
 
-            sqlhelp.import_all(print_func)
-
-            year = datetime.date.today().year
-
-            for month in range(1, 13):
-                month_date = datetime.date(year, month, 1)
-                townships_infl = township_influence_townships(month_date)
-
-                rows = []
-
-                for code, ts_infl in townships_infl.items():
-                    rows.append(TownshipReproductionRateCache(code=code, month=month_date, reproduction_rate=round(ts_infl.get_rep_number(), 1)))
-
-                with db_session() as db:
-                    db.bulk_save_objects(rows)
-                    db.commit()
-
-                self.messages.append(_format_import_msg(f'Spočteny reprodukční čísla pro {month}. měsíc.'))
+            sqlhelp.import_all(progress_print=_print)
 
             generate()
 

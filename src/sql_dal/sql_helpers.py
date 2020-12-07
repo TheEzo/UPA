@@ -1,10 +1,12 @@
+import datetime
 import sys
 sys.path.append("..")
 
 from . import import_data as sqlim
 from sqlalchemy import func
 from web.core.session import db_session
-from web.core.model import Township
+from web.core.model import Township, TownshipReproductionRateCache
+from .township_influence import township_influence_townships
 
 def import_all(progress_print = print):
     sqlim.import_countries()
@@ -25,3 +27,20 @@ def import_all(progress_print = print):
     for township in sqlim.import_cases_recovered_death():
         township_count = township_count - 1
         progress_print(f'Infikovaným v kraji {township} byly přiřazeny datumy vyléčení/úmrtí. Zbývá {township_count} krajů.')
+
+    year = datetime.date.today().year
+
+    for month in range(1, 13):
+        month_date = datetime.date(year, month, 1)
+        townships_infl = township_influence_townships(month_date)
+
+        rows = []
+
+        for code, ts_infl in townships_infl.items():
+            rows.append(TownshipReproductionRateCache(code=code, month=month_date, reproduction_rate=round(ts_infl.get_rep_number(), 1)))
+
+        with db_session() as db:
+            db.bulk_save_objects(rows)
+            db.commit()
+
+        progress_print(f'Spočteny reprodukční čísla pro {month}. měsíc.')
