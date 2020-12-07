@@ -113,7 +113,8 @@ class TownshipsAveragesCount(object):
     def __init__(self, ts):
         self.ts = ts
         self.avg_neighbours = 0
-        self.avg_all = 0
+        self.avg_diff_neighbours = 0
+        self.avg_diff_all = 0
 
     def __str__(self):
         return "{0}: neighbours {1}, all {2}".format(self.ts, self.avg_neighbours, self.avg_all)
@@ -131,16 +132,19 @@ def township_influence_averages(townships, neighbours):
         all_sum = 0
         for code2, ts2 in townships.items():
             all_sum += abs(ts.get_rep_number() - ts2.get_rep_number())
-        tac.avg_all = (all_sum)/(len(townships) - 1)
+        tac.avg_diff_all = (all_sum)/(len(townships) - 1)
         nb_cnt = 0
+        nb_sum_diff = 0
         nb_sum = 0
         for nb in neighbours:
             # print("compare {0} {1} {1}".format(code, nb[0], nb[1]))
             if code == nb[0] or code == nb[1]:
-                nb_sum += abs(townships[nb[0]].get_rep_number() - townships[nb[1]].get_rep_number())
+                nb_sum_diff += abs(townships[nb[0]].get_rep_number() - townships[nb[1]].get_rep_number())
+                nb_sum += townships[nb[1]].get_rep_number() if code == nb[0] else townships[nb[0]].get_rep_number()
                 nb_cnt += 1
         logger.debug("nb cnt {0}".format(nb_cnt))
         if nb_cnt > 0:
+            tac.avg_diff_neighbours = nb_sum_diff / nb_cnt
             tac.avg_neighbours = nb_sum / nb_cnt
             ret.append(tac)
         else:

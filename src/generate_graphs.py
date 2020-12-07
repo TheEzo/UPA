@@ -164,10 +164,10 @@ def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__),
 
     # fill lists
     for avg in avgs:
-        print(avg.ts)
         x.append(avg.ts.get_rep_number())
-        y.append(avg.avg_neighbours)
-        z.append(avg.avg_all)
+        w.append(avg.avg_neighbours)
+        y.append(avg.avg_diff_neighbours)
+        z.append(avg.avg_diff_all)
     
     # generate plot
     fig, ax = plt.subplots()
@@ -178,7 +178,7 @@ def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__),
     plt.ylabel("Average difference of RN")
     plt.tight_layout()
     # plt.show()
-    plt.savefig(os.path.join(fig_dir, f'{ext}township_averages_sorted_x.png'))
+    plt.savefig(os.path.join(fig_dir, f'{ext}township_averages_diff_sorted_x.png'))
 
     # generate plot 2
     fig, ax = plt.subplots()
@@ -187,6 +187,16 @@ def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__),
     plt.legend(loc='best')
     plt.xlabel("Reproduction number (RN) of a township")
     plt.ylabel("Average difference of RN")
+    plt.tight_layout()
+    # plt.show()
+    plt.savefig(os.path.join(fig_dir, f'{ext}township_averages_diff_rep_num_x.png'))
+
+    # generate plot 3
+    fig, ax = plt.subplots()
+    plt.scatter(x, w, marker='o')
+    plt.legend(loc='best')
+    plt.xlabel("Reproduction number (RN) of a township")
+    plt.ylabel("Average RN of neighbours")
     plt.tight_layout()
     # plt.show()
     plt.savefig(os.path.join(fig_dir, f'{ext}township_averages_rep_num_x.png'))
