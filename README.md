@@ -31,7 +31,7 @@ $ python src/run.py [-f] [-m] [-q] [-w]
 ```
 - ```-f``` fill data into NoSQL database
 - ```-m``` migrate data from NoSQL to SQL
-- ```-q``` generate all graphs
+- ```-q``` generate all graphs to src/web/static
 - ```-w``` run web application (possible to upload data from here)
 
 ## Authors
