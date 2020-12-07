@@ -3,6 +3,7 @@ import seaborn as sns
 import os
 import pandas as pd
 import numpy as np
+from datetime import date
 
 from sql_dal.township_influence import township_influence_townships, township_influence_neighbours, township_influence_averages
 
@@ -143,11 +144,15 @@ def generate(_from='2019-01-01', _to='2022-12-30', tmp=False, fig_dir=os.path.jo
     plt.tight_layout()
     plt.savefig(os.path.join(fig_dir, f'{ext}cumulative_deaths.png'))
 
-def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__), 'web', 'static')):
-    ext = 'tmp_' if tmp else ''
+
+def generate_township(month_date='2020-01-01', fig_dir=os.path.join(os.path.dirname(__file__), 'web', 'static')):
+    if type(month_date) is str:
+        month_date = date.fromisoformat(month_date)
+    elif type(month_date) is not date:
+        raise Exception('invalid date')
 
     # prepare values
-    ts = township_influence_townships()
+    ts = township_influence_townships(month_date)
     nbs = township_influence_neighbours()
     avgs = township_influence_averages(ts, nbs)
 
@@ -164,7 +169,6 @@ def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__),
 
     # fill lists
     for avg in avgs:
-        print(avg.ts)
         x.append(avg.ts.get_rep_number())
         y.append(avg.avg_neighbours)
         z.append(avg.avg_all)
@@ -178,7 +182,7 @@ def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__),
     plt.ylabel("Average difference of RN")
     plt.tight_layout()
     # plt.show()
-    plt.savefig(os.path.join(fig_dir, f'{ext}township_averages_sorted_x.png'))
+    plt.savefig(os.path.join(fig_dir, f'township_averages_sorted_x_{month_date.month}.png'))
 
     # generate plot 2
     fig, ax = plt.subplots()
@@ -189,8 +193,15 @@ def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__),
     plt.ylabel("Average difference of RN")
     plt.tight_layout()
     # plt.show()
-    plt.savefig(os.path.join(fig_dir, f'{ext}township_averages_rep_num_x.png'))
+    plt.savefig(os.path.join(fig_dir, f'township_averages_rep_num_x_{month_date.month}.png'))
 
+
+def generate_townships():
+    year = date.today().year
+
+    for month in range(1, 13):
+        month_date = date(year, month, 1)
+        generate_township(month_date)
 
 if __name__ == '__main__':
     generate()

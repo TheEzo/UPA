@@ -128,6 +128,8 @@ def import_covid_cases():
             size = 1000
         )
         
+        count = 0
+
         for doc in resp:
             case = doc['_source']
             
@@ -142,6 +144,12 @@ def import_covid_cases():
                 continue
 
             db.add(CovidCase(age=case['vek'], gender=sex, infected_date=case['datum'], township_code=case['okres_lau_kod'], country_code=country))
+
+            count = count + 1
+
+            if count == 5000:
+                count = 0
+                db.commit()
 
         db.commit()
 

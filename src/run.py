@@ -10,7 +10,7 @@ import os
 
 from business_logic.helpers import delete_all
 from sql_dal import sql_helpers
-from generate_graphs import generate, generate_township
+from generate_graphs import generate, generate_townships
 from business_logic.custom_query_graph import generate_custom_query
 from web.views.base import copy_data_file
 from es_dal.fill import fill_data
@@ -67,7 +67,7 @@ def main():
         logger.info("Finished move: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     elif args.queries:
         generate()
-        generate_township()
+        generate_townships()
         generate_custom_query()
 
         logger.info("Finished queries: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))

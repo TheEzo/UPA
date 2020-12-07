@@ -76,7 +76,7 @@ def generate_custom_query(_from='2019-01-01', _to='2022-12-30', tmp=False, fig_d
     fig.set_figwidth(10)
     fig.suptitle('Vliv věku na délku nemoci a úmrtnost')  
 
-    axs[0].set_title('Závislost věkové kategorie infikovaných na délce nemoci')
+    axs[0].set_title('Závislost věkové kategorie nakažených na délce nemoci')
     axs[0].set(ylabel='Délka nemoci')   
     axs[0].tick_params(top=False, bottom=True, left=True, right=False, labelbottom=True)    
 
@@ -88,7 +88,7 @@ def generate_custom_query(_from='2019-01-01', _to='2022-12-30', tmp=False, fig_d
 
     axs[0].legend()
     
-    axs[1].set_title('Závislost věkové kategorie infikovaných na počtu úmrtí')
+    axs[1].set_title('Závislost věkové kategorie nakažených na počtu úmrtí')
     axs[1].set_xticks(x) 
     axs[1].set_xticklabels(('0-10', '11-20', '21-30', '31-40', '41-50', '51-60', '61-70', '71-80', '81-90', '91+'))
     axs[1].set(ylabel='Počet úmrtí')

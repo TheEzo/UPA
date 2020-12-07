@@ -5,7 +5,7 @@ sys.path.append("..")
 from flask import render_template, request, redirect, url_for, send_from_directory, current_app as app, Response, g
 from flask.views import MethodView
 from .second_query_map import get_map
-from generate_graphs import generate
+from generate_graphs import generate, generate_townships
 import ssl
 
 import json
@@ -26,6 +26,7 @@ from pathlib import Path
 from sql_dal import import_data as sqlim
 from sql_dal import sql_helpers as sqlhelp
 from sqlalchemy import func
+from business_logic.custom_query_graph import generate_custom_query
 
 from business_logic.helpers import delete_all, get_filename_without_extension
 from sql_dal.township_influence import township_influence_townships
@@ -216,7 +217,9 @@ class ImportingThread(threading.Thread):
             sqlhelp.import_all(progress_print=_print)
 
             generate()
-
+            generate_custom_query()
+            generate_townships()
+                
             with db_session() as db:
                 imp_row = db.query(DataConsistency).filter(DataConsistency.code == 'import').one()
                 db.add(DataConsistency(code='valid'))
@@ -267,7 +270,7 @@ class StartImport(MethodView):
             importing_thread.start()
         except Exception as e:
             with db_session() as db:
-                db.remove(row)
+                db.delete(row)
                 db.commit()
 
             importing_thread = None
