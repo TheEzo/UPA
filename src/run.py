@@ -57,9 +57,13 @@ def main():
     elif args.move:
         models.Base.metadata.drop_all()
         models.Base.metadata.create_all()
-        
+
         sql_helpers.import_all()
-      
+        
+        with db_session() as db:
+            db.add(models.DataConsistency(code='valid'))
+            db.commit()
+
         logger.info("Finished move: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     elif args.queries:
         generate()
