@@ -143,6 +143,7 @@ def generate(_from='2019-01-01', _to='2022-12-30', tmp=False, fig_dir=os.path.jo
     plt.tight_layout()
     plt.savefig(os.path.join(fig_dir, f'{ext}cumulative_deaths.png'))
 
+
 def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__), 'web', 'static')):
     ext = 'tmp_' if tmp else ''
 
@@ -156,7 +157,8 @@ def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__),
         return e.ts.get_rep_number()
     avgs.sort(key=sort_key)
 
-    # prepare lists
+    # init lists
+    w = []
     x = []
     xnum = range(0, len(avgs))
     y = []
