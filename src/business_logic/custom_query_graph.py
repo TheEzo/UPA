@@ -4,11 +4,12 @@ import pandas as pd
 import numpy as np
 import scipy
 import math 
+import os
 from sqlalchemy import create_engine   
 
 sql_connector = 'mysql+pymysql://root:root@127.0.0.1/upa'
 
-def generate_custom_query(_from='2019-01-01', _to='2022-12-30', tmp=False):
+def generate_custom_query(_from='2019-01-01', _to='2022-12-30', tmp=False, fig_dir=os.path.join(os.path.dirname(__file__), '..', 'web', 'static')):
     categories_nb = 10  
     
     infected_class = [list() for i in range(0, categories_nb)]
@@ -103,4 +104,5 @@ def generate_custom_query(_from='2019-01-01', _to='2022-12-30', tmp=False):
     axs[1].legend(loc='upper left') 
 
     prefix = 'tmp_' if tmp is True else ''
-    fig.savefig(f'{prefix}custom_query.png')
+
+    fig.savefig(os.path.join(fig_dir, f'{prefix}custom_query.png'))

@@ -24,6 +24,7 @@ from es_dal.fill import fill_data
 from pathlib import Path    
 
 from sql_dal import import_data as sqlim
+from sql_dal import sql_helpers as sqlhelp
 from sqlalchemy import func
 
 from business_logic.helpers import delete_all, get_filename_without_extension
@@ -209,24 +210,9 @@ class ImportingThread(threading.Thread):
                 fill_data(path)
                 self.messages.append(_format_import_msg(f'Soubor {Path(path).name} byl nahrán do NoSQL databáze.'))
             
-            sqlim.import_countries()
-            self.messages.append(_format_import_msg(f'Země byly importovány do MySQL databáze.'))
+            print_func = lambda msg: self.messages.append(_format_import_msg(msg))
 
-            sqlim.import_townships_and_regions()
-            self.messages.append(_format_import_msg(f'Kraje a okresy byly importovány do MySQL databáze.'))
-
-            sqlim.import_township_neighbours()
-            self.messages.append(_format_import_msg(f'Sousedící okresy byly importovány do MySQL databáze.'))
-
-            sqlim.import_covid_cases()
-            self.messages.append(_format_import_msg(f'Záznamy infikovaných osob byly importovány do MySQL databáze.'))
-
-            with db_session() as db:
-                township_count = db.query(func.count(Township.code)).first()[0]
-           
-            for township in sqlim.import_cases_recovered_death():
-                township_count = township_count - 1
-                self.messages.append(_format_import_msg(f'Infikovaným v kraji {township} byly přiřazeny datumy vyléčení/úmrtí. Zbývá {township_count} krajů.'))
+            sqlhelp.import_all(print_func)
 
             year = datetime.date.today().year
 
@@ -350,6 +336,16 @@ class Upload(MethodView):
         else:
             return {'success': False, 'error': 'Žádný soubor k nahrání.'}
 
+def copy_data_file(code):
+    remove_tmp_file(code)
+
+    orig_file = find_file(code, data_path)
+
+    if orig_file is None:
+        raise Exception(f'Výchozí soubor {code} nebyl nalezen.')
+
+    copy(orig_file, folder_path)
+
 class CopyFromData(MethodView):
     def post(self):
         code = request.form['code']
@@ -357,15 +353,8 @@ class CopyFromData(MethodView):
         if not code or code not in ALLOWED_CODES:
             return {'success': False, 'error': 'Položka nebyla rozpoznána. Obnovte stránku.'}
         
-        remove_tmp_file(code)
-
         try:
-            orig_file = find_file(code, data_path)
-
-            if orig_file is None:
-                raise Exception(f'Výchozí soubor {code} nebyl nalezen.')
-
-            copy(orig_file, folder_path)
+            copy_data_file(code)
         except Exception as e:
             return {'success': False, 'error': str(e)}
 

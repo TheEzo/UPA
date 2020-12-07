@@ -23,8 +23,8 @@ class TSInfluence:
         return 0 if self.cases1 == 0 else self.cases2/self.cases1
 
 
-def township_influence(day1='2020-11-18', day2='2020-11-19'):
-    townships = township_influence_townships(day1, day2)
+def township_influence(month_date='2020-01-01'):
+    townships = township_influence_townships(month_date)
     neighbours = township_influence_neighbours()
     township_influence_graph(townships, neighbours)
     return
@@ -100,7 +100,7 @@ def township_influence_townships(month_date='2020-01-01'):
 
     return townships
 
-def township_influence_neighbours(day1='2020-11-18', day2='2020-11-19'):
+def township_influence_neighbours():
     neighbours = []
     with db_session() as db:
         for tn in db.query(NeighbourTownship.code1, NeighbourTownship.code2).all():
