@@ -53,9 +53,9 @@ def main():
         # fill_data('http://apl.czso.cz/iSMS/cisexp.jsp?kodcis=1186&typdat=0&cisvaz=86_275&datpohl=25.11.2020&cisjaz=203&format=2&separator=,') #staty.csv; windows-1250
         # fill_data('http://apl.czso.cz/iSMS/cisexp.jsp?kodcis=108&typdat=1&cisvaz=109_210&datpohl=20.10.2020&cisjaz=203&format=2&separator=,') #kraje_a_okresy.csv; windows-1250
 
-        fill_data(get_data_path('staty.csv'))
-        fill_data(get_data_path('kraje_a_okresy.csv'))
-        fill_data(get_data_path('sousedni_okresy.csv'))
+        fill_data(get_data_path('states.csv'))
+        fill_data(get_data_path('regions.csv'))
+        fill_data(get_data_path('neighbours.csv'))
 
         fill_data(r'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/osoby.csv') #osoby (nakazeni)
         fill_data(r'https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19/vyleceni.csv') #vyleceni

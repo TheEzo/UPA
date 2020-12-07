@@ -4,9 +4,10 @@ import os
 import pandas as pd
 import numpy as np
 
+from sql_dal.township_influence import township_influence_townships, township_influence_neighbours, township_influence_averages
 
-def generate(_from='2019-01-01', _to='2022-12-30', tmp=False):
-    fig_dir = os.path.join(os.path.dirname(__file__), 'web', 'static')
+
+def generate(_from='2019-01-01', _to='2022-12-30', tmp=False, fig_dir=os.path.join(os.path.dirname(__file__), 'web', 'static')):
     sql_connector = 'mysql+pymysql://root:root@127.0.0.1/upa'
 
     ext = 'tmp_' if tmp else ''
@@ -142,52 +143,55 @@ def generate(_from='2019-01-01', _to='2022-12-30', tmp=False):
     plt.tight_layout()
     plt.savefig(os.path.join(fig_dir, f'{ext}cumulative_deaths.png'))
 
+def generate_township(tmp=False, fig_dir=os.path.join(os.path.dirname(__file__), 'web', 'static')):
+    ext = 'tmp_' if tmp else ''
+
+    # prepare values
+    ts = township_influence_townships()
+    nbs = township_influence_neighbours()
+    avgs = township_influence_averages(ts, nbs)
+
+    # sort townships
+    def sort_key(e):
+        return e.ts.get_rep_number()
+    avgs.sort(key=sort_key)
+
+    # prepare lists
     x = []
+    xnum = range(0, len(avgs))
     y = []
     z = []
 
-    rows = []
-
-    custom_query = f"""
-            select  (CASE
-                        WHEN age < 11 THEN 0
-                        WHEN age > 80 THEN 8
-                        ELSE (age-1) DIV 10
-                    END) as age,
-                    IF(death_date is not null, DATEDIFF(death_date, infected_date), DATEDIFF(recovered_date, infected_date)) as diff, 
-                   (death_date is not null) as isdead
-            from covidcase 
-            where infected_date between "{_from}" and "{_to}" and (death_date is not null or recovered_date is not null)
-            """
+    # fill lists
+    for avg in avgs:
+        print(avg.ts)
+        x.append(avg.ts.get_rep_number())
+        y.append(avg.avg_neighbours)
+        z.append(avg.avg_all)
     
-    from sqlalchemy import create_engine
+    # generate plot
+    fig, ax = plt.subplots()
+    plt.scatter(xnum, y, marker='^', label="neighbours")
+    plt.scatter(xnum, z, marker='o', label="all")
+    plt.legend(loc='best')
+    plt.xlabel("Townships sorted by RN")
+    plt.ylabel("Average difference of RN")
+    plt.tight_layout()
+    # plt.show()
+    plt.savefig(os.path.join(fig_dir, f'{ext}township_averages_sorted_x.png'))
 
-    engine = create_engine(sql_connector)
-    with engine.connect() as con:
-        for row in con.execute(custom_query):
-            # rows.append(row)
-            x.append(row[0])
-            y.append(row[1])
-            z.append(row[2])
+    # generate plot 2
+    fig, ax = plt.subplots()
+    plt.scatter(x, y, marker='^', label="neighbours")
+    plt.scatter(x, z, marker='o', label="all")
+    plt.legend(loc='best')
+    plt.xlabel("Reproduction number (RN) of a township")
+    plt.ylabel("Average difference of RN")
+    plt.tight_layout()
+    # plt.show()
+    plt.savefig(os.path.join(fig_dir, f'{ext}township_averages_rep_num_x.png'))
 
 
-    data = {'apples': 10, 'oranges': 15, 'lemons': 5, 'limes': 20}
-    names = list(data.keys())
-    values = list(data.values())
-
-    fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True)
-    axs[0].bar(names, values)
-    axs[1].scatter(names, values)
-    axs[2].plot(names, values)
-    fig.suptitle('Categorical Plotting')
-
-    plt.hist()
-
-    fig = plt.subplots(figsize =(10, 7)) 
-    # Creating plot 
-    plt.hist2d(x, y) 
-    # plot.title("Simple 2D Histogram") 
-    plt.savefig(os.path.join(fig_dir, f'{ext}custom_query.png'))
-    
 if __name__ == '__main__':
     generate()
+    generate_township()

@@ -5,7 +5,7 @@
 
 ## Requirements
  - Docker 18.03+ (including docker-compose etc.)
- - Python 3.6+ 
+ - Python 3.7+ 
  - virtualenv
 
 ## Usage
