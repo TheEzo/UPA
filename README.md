@@ -3,6 +3,9 @@
 * **Dotaz B**: určete vliv počtu nemocných a jeho změny v čase na sousední okresy (aneb zjistětejak se šíří nákaza přes hranice okresů).
 * **Vlastní dotaz**: určete vliv věku na délku nemoci a úmrtnost
 
+## Odevzdání
+**Ve WISu je malý limit pro odevzdání, proto v odevzdaném archivu chybí data, zdrojový kód dokumentace a obrázky.**
+
 ## Requirements
  - Docker 18.03+ (including docker-compose etc.)
  - Python 3.7+ 
