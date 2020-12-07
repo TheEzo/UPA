@@ -161,7 +161,8 @@ def generate_township(month_date='2020-01-01', fig_dir=os.path.join(os.path.dirn
         return e.ts.get_rep_number()
     avgs.sort(key=sort_key)
 
-    # prepare lists
+    # init lists
+    w = []
     x = []
     xnum = range(0, len(avgs))
     y = []
@@ -170,35 +171,42 @@ def generate_township(month_date='2020-01-01', fig_dir=os.path.join(os.path.dirn
     # fill lists
     for avg in avgs:
         x.append(avg.ts.get_rep_number())
-        y.append(avg.avg_neighbours)
-        z.append(avg.avg_all)
+        w.append(avg.avg_neighbours)
+        y.append(avg.avg_diff_neighbours)
+        z.append(avg.avg_diff_all)
     
-    # generate plot
-    fig, ax = plt.subplots()
-    plt.scatter(xnum, y, marker='^', label="neighbours")
-    plt.scatter(xnum, z, marker='o', label="all")
-    plt.legend(loc='best')
-    plt.xlabel("Townships sorted by RN")
-    plt.ylabel("Average difference of RN")
-    plt.tight_layout()
-    # plt.show()
-    plt.savefig(os.path.join(fig_dir, f'township_averages_sorted_x_{month_date.month}.png'))
 
-    # generate plot 2
+    fig, axs = plt.subplots(1, 2)
+    fig.set_figheight(5)
+    fig.set_figwidth(10)
+    fig.suptitle('Graf průměrného rozdílu reprodukčních čísel sousedních okresů k reprodukčnímu číslu okresu\n a průměrného rozdílu reprodukčních čísel všech okresů k reprodukčnímu číslu okresu')  
+
+    axs[0].set(xlabel='Okresy seřazené podle reprodukčního čísla', ylabel='Průměrný rozdíl reprodukčního čísla')
+    axs[0].scatter(xnum, y, marker='^', label="Sousedi")
+    axs[0].scatter(xnum, z, marker='o', label="Všichni")
+    axs[0].legend(loc='best')
+
+    axs[1].set(xlabel='Reprodukční číslo okresu', ylabel='Průměrný rozdíl reprodukčního čísla')
+    axs[1].scatter(x, y, marker='^', label="Sousedi")
+    axs[1].scatter(x, z, marker='o', label="Všichni")
+    axs[1].legend(loc='best')
+    
+    fig.tight_layout()
+    fig.savefig(os.path.join(fig_dir, f'township_averages_diff_{month_date.month}.png'))
+
+    # generate plot 3
     fig, ax = plt.subplots()
-    plt.scatter(x, y, marker='^', label="neighbours")
-    plt.scatter(x, z, marker='o', label="all")
-    plt.legend(loc='best')
-    plt.xlabel("Reproduction number (RN) of a township")
-    plt.ylabel("Average difference of RN")
+    plt.scatter(x, w, marker='o')
+    plt.title('Graf průměrného reprodukčního čísla sousedních okresů\n vzhledem k reprodukčnímu číslu okresu')
+    plt.xlabel("Reprodukční číslo okresu")
+    plt.ylabel("Průměrné reprodukční číslo sousedních okresů")
     plt.tight_layout()
-    # plt.show()
-    plt.savefig(os.path.join(fig_dir, f'township_averages_rep_num_x_{month_date.month}.png'))
+    plt.savefig(os.path.join(fig_dir, f'township_averages_rep_num_{month_date.month}.png'))
 
 
 def generate_townships():
     year = date.today().year
-
+   
     for month in range(1, 13):
         month_date = date(year, month, 1)
         generate_township(month_date)
