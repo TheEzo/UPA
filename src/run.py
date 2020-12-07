@@ -68,9 +68,9 @@ def main():
 
         logger.info("Finished move: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     elif args.queries:
-        generate()
+        # generate()
         generate_townships()
-        generate_custom_query()
+        # generate_custom_query()
 
         logger.info("Finished queries: {0}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     elif args.erase:
