@@ -126,8 +126,6 @@ def township_influence_averages(townships, neighbours):
     ret = []
     all_rep_nums_count = 0
     for code, ts in townships.items():
-        print(ts.cases1)
-        print(ts.cases2)
         tac = TownshipsAveragesCount(ts)
         all_sum = 0
         for code2, ts2 in townships.items():

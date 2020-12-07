@@ -306,9 +306,7 @@ class Upload(MethodView):
 
                 try:
                     if (ext == '.csv'):
-                        df = pd.read_csv(uploaded_file_path,
-                                         index_col=0, nrows=1)
-
+                        df = pd.read_csv(uploaded_file_path, nrows=1)
                         check_csv_file(df, code)
                     else:
                         with open(uploaded_file_path) as f:
@@ -362,8 +360,8 @@ class Base(MethodView):
            
             months = (from_date.month, to_date.month)
 
-            generate()
             generate(args['from'], args['to'], tmp)
+            generate_custom_query(args['from'], args['to'], tmp)
             influence_map = get_map(from_date, to_date)
             
         return render_template('base.html', map_data=influence_map if influence_map else get_map(), months=months, tmp=tmp)

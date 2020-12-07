@@ -144,7 +144,7 @@ def get_map(month_from='2020-01-01', month_to='2020-12-01'):
                 svg_townships[key].append(f'<polygon class="okres" points="{path}" style="fill: {_val_to_color(repr_rate_cached, 0.16)};" onmousemove="showTooltip(evt, \'{ts.name}, {repr_rate_cached}\');" onmouseout="hideTooltip();"/>')
                 svg_townships[key].append(f'<text x="{ts.x_middle}" y="{ts.y_middle}" text-anchor="middle" dy="0.2em"font-size="10">{ts.name}</text>')    
 
-        def _get_infl_arrow(ts, nb, i):
+        def _get_infl_arrow(ts, nb):
             same = list(set(ts.points) & set(nb.points))
 
             if len(same) == 0:
@@ -168,7 +168,7 @@ def get_map(month_from='2020-01-01', month_to='2020-12-01'):
                 x2 = ts.x_middle + tx
                 y2 = ts.y_middle + ty
 
-            return f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="none" stroke-width="4" marker-end="url(#arrow{i})" />'
+            return f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="none" stroke-width="4" marker-end="url(#arrow'
 
         for nb in neighbours_infl:
             ts1 = townships[nb[0]]
@@ -183,14 +183,14 @@ def get_map(month_from='2020-01-01', month_to='2020-12-01'):
                 
                 if ts1_cached.reproduction_rate > ts2_cached.reproduction_rate:
                     if t1_t2 is None:
-                        t1_t2 = _get_infl_arrow(ts1, ts2, key)
+                        t1_t2 = _get_infl_arrow(ts1, ts2)
 
-                    svg.append(t1_t2)
+                    svg.append(t1_t2 + f'{key})" />')
                 elif ts1_cached.reproduction_rate < ts2_cached.reproduction_rate:
                     if t2_t1 is None:
-                        t2_t1 = _get_infl_arrow(ts2, ts1, key)
+                        t2_t1 = _get_infl_arrow(ts2, ts1)
 
-                    svg.append(t2_t1)
+                    svg.append(t2_t1 + f'{key})" />')
         
         all_svg = []
         
